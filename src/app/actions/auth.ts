@@ -34,5 +34,5 @@ export async function logout() {
     }
 
     revalidatePath('/', 'layout')
-    redirect('/docs/login')
+    redirect('/auth/login?source=admin')
 }

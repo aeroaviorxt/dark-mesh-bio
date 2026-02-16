@@ -22,10 +22,8 @@ export default function GuestbookClient({ user, initialMessages }: { user: User 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editInput, setEditInput] = useState('');
 
-    const handleSignIn = async () => {
-        const { url, error } = await signInWithGithub();
-        if (error) alert(error);
-        else if (url) window.location.href = url;
+    const handleSignIn = () => {
+        window.location.href = '/auth/login?source=guestbook';
     };
 
     const handleSignOut = async () => {
