@@ -141,7 +141,7 @@ export default function AdminClient({ initialDocs, userEmail }: AdminClientProps
                         >
                             <Save size={14} /> {isPending ? 'SYNCING...' : 'SAVE'}
                         </button>
-                        <button onClick={() => logout()} className="flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full text-xs font-bold font-mono transition-all">
+                        <button onClick={() => logout('/docs')} className="flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full text-xs font-bold font-mono transition-all">
                             <LogOut size={14} /> EXIT
                         </button>
                     </div>

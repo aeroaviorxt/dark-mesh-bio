@@ -28,8 +28,7 @@ export default function GuestbookClient({ user, initialMessages }: { user: User 
 
     const handleSignOut = async () => {
         const { logout } = await import('@/app/actions/auth');
-        await logout();
-        window.location.reload();
+        await logout('/guestbook');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {

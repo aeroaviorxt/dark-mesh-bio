@@ -24,15 +24,8 @@ export async function login(formData: FormData) {
     redirect('/docs/admin')
 }
 
-export async function logout() {
+export async function logout(redirectTo: string = '/') {
     const supabase = await createClient()
-
-    const { error } = await supabase.auth.signOut()
-
-    if (error) {
-        redirect('/error')
-    }
-
-    revalidatePath('/', 'layout')
-    redirect('/auth/login?source=admin')
+    await supabase.auth.signOut()
+    redirect(redirectTo)
 }
