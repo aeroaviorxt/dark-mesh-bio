@@ -100,27 +100,75 @@ export default function MeClient({ initialConfig }: MeClientProps) {
 
     const [presenceData, setPresenceData] = useState<any>(null);
 
-    // Lanyard Presence Polling
+    // Lanyard WebSocket Real-time Connection
     useEffect(() => {
-        if (config.profile.presence?.mode !== 'auto' || !config.profile.presence?.discordId) return;
+        const discordId = config.profile.presence?.discordId?.trim();
+        if (config.profile.presence?.mode !== 'auto' || !discordId) {
+            setPresenceData(null);
+            return;
+        }
 
-        const fetchPresence = async () => {
-            const discordId = config.profile.presence?.discordId;
-            if (!discordId) return;
-            try {
-                const res = await fetch(`https://api.lanyard.rest/v1/users/${discordId}`);
-                const data = await res.json();
-                if (data.success) {
-                    setPresenceData(data.data);
+        let socket: WebSocket | null = null;
+        let heartbeatInterval: any = null;
+
+        const connect = () => {
+            socket = new WebSocket('wss://api.lanyard.rest/socket');
+
+            socket.onopen = () => {
+                console.log('Lanyard Uplink: CONNECTED');
+            };
+
+            socket.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+
+                // Initial Hello (Receive Heartbeat Interval)
+                if (message.op === 1) {
+                    heartbeatInterval = setInterval(() => {
+                        if (socket && socket.readyState === WebSocket.OPEN) {
+                            socket.send(JSON.stringify({ op: 3 }));
+                        }
+                    }, message.d.heartbeat_interval);
+
+                    // Subscribe to individual user
+                    socket.send(JSON.stringify({
+                        op: 2,
+                        d: { subscribe_to_id: discordId }
+                    }));
                 }
-            } catch (error) {
-                console.error('Lanyard fetch error:', error);
-            }
+
+                // Initial State or Update
+                if (message.op === 0) {
+                    if (message.t === 'INIT_STATE' || message.t === 'PRESENCE_UPDATE') {
+                        console.log('Lanyard Data:', message.d);
+                        setPresenceData(message.d);
+                    }
+                }
+            };
+
+            socket.onclose = () => {
+                console.log('Lanyard Uplink: DISCONNECTED');
+                if (heartbeatInterval) clearInterval(heartbeatInterval);
+                // Attempt to reconnect after 5s if still in auto mode
+                setTimeout(() => {
+                    if (config.profile.presence?.mode === 'auto') connect();
+                }, 5000);
+            };
+
+            socket.onerror = (err) => {
+                console.error('Lanyard Socket Error:', err);
+                socket?.close();
+            };
         };
 
-        fetchPresence();
-        const interval = setInterval(fetchPresence, 10000); // Poll every 10 seconds
-        return () => clearInterval(interval);
+        connect();
+
+        return () => {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            if (socket) {
+                socket.onclose = null; // Prevent reconnect on cleanup
+                socket.close();
+            }
+        };
     }, [config.profile.presence?.mode, config.profile.presence?.discordId]);
 
     // Supabase Realtime Subscription
@@ -169,14 +217,20 @@ export default function MeClient({ initialConfig }: MeClientProps) {
     };
 
     const getStatusInfo = () => {
-        if (config.profile.presence?.mode === 'auto' && presenceData) {
+        if (config.profile.presence?.mode === 'auto') {
+            if (!presenceData) return { text: 'Uplink_Sync...', color: 'blue' as const };
+
             const status = presenceData.discord_status;
+            // Find custom status activity (type 4)
+            const customStatus = presenceData.activities?.find((a: any) => a.type === 4);
+            const statusText = customStatus?.state || customStatus?.details || (status.charAt(0).toUpperCase() + status.slice(1));
+
             switch (status) {
-                case 'online': return { text: 'Online', color: 'green' as const };
-                case 'idle': return { text: 'Idle', color: 'yellow' as const };
-                case 'dnd': return { text: 'DND', color: 'red' as const };
+                case 'online': return { text: statusText, color: 'green' as const };
+                case 'idle': return { text: statusText, color: 'yellow' as const };
+                case 'dnd': return { text: statusText, color: 'red' as const };
                 case 'offline': return { text: 'Offline', color: 'gray' as const };
-                default: return { text: 'Offline', color: 'gray' as const };
+                default: return { text: statusText, color: 'gray' as const };
             }
         }
         return {
