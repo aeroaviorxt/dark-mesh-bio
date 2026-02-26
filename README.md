@@ -13,12 +13,27 @@ A state-of-the-art, high-performance Link-in-Bio system built with **Next.js 15+
     npm install
     ```
 2.  **Environment Setup**:
-    Copy `.env.local.example` (if provided) or create `.env.local` using the template below.
-3.  **Supabase Setup**: Follow the detailed guide below.
-4.  **Run Locally**:
+    Copy `.env.local.example` or create `.env.local` using the template below.
+3.  **Run Locally**:
     ```bash
     npm run dev
     ```
+
+---
+
+## 🔐 Environment Variables
+
+| Variable | Requirement | Description |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_SUPABASE_URL` | **Required** | Your Supabase Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Required** | Your Supabase Anon Key |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Required** | Your Supabase Service Role Key (for secure actions) |
+| `SPOTIFY_CLIENT_ID` | Optional | Client ID from Spotify Dev Dashboard |
+| `SPOTIFY_CLIENT_SECRET` | Optional | Client Secret from Spotify Dev Dashboard |
+| `SPOTIFY_REDIRECT_URI` | Optional | Redirect URI for Spotify (must match dashboard) |
+| `YOUTUBE_API_KEY` | Optional | Google Cloud API Key for YouTube Search |
+| `DISCORD_GUILD_ID` | Optional | Server ID for role-based authentication |
+| `DISCORD_ROLE_ID` | Optional | Role ID for role-based authentication |
 
 ---
 
