@@ -6,7 +6,7 @@ import {
     Plus, Trash2, Save, LogOut,
     Music, Link as LinkIcon, Book,
     Check, ArrowUp, ArrowDown,
-    User, Eye, AlertCircle, Camera, Upload, Activity
+    User, Eye, AlertCircle, Camera, Upload, Activity, Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MeConfig } from '@/lib/me-config';
@@ -767,6 +767,69 @@ export default function MeAdminClient({ initialConfig, isSpotifyConnected }: MeA
                                                         [REMOVE]
                                                     </button>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Security Settings */}
+                            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
+                                <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 font-mono text-amber-500">
+                                    <Shield size={16} /> Security_Protocols
+                                </h2>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest">Discord_Role_Auth</span>
+                                            <span className="text-[8px] font-mono text-zinc-500 uppercase">Restrict admin to specific role</span>
+                                        </div>
+                                        <button
+                                            onClick={() => setConfig({
+                                                ...config,
+                                                auth: { ...config.auth!, discordRoleEnabled: !config.auth?.discordRoleEnabled }
+                                            })}
+                                            className={cn(
+                                                "px-3 py-1 rounded-md text-[9px] font-bold font-mono transition-all uppercase",
+                                                config.auth?.discordRoleEnabled ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "bg-zinc-800 text-zinc-500 border border-white/5"
+                                            )}
+                                        >
+                                            {config.auth?.discordRoleEnabled ? 'ACTIVE' : 'INACTIVE'}
+                                        </button>
+                                    </div>
+
+                                    {config.auth?.discordRoleEnabled && (
+                                        <div className="space-y-3 p-3 rounded-xl bg-black/40 border border-white/5 animate-in fade-in slide-in-from-top-2">
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">Discord_Server_ID</label>
+                                                <input
+                                                    type="text"
+                                                    value={config.auth?.discordServerId || ''}
+                                                    onChange={(e) => setConfig({
+                                                        ...config,
+                                                        auth: { ...config.auth!, discordServerId: e.target.value }
+                                                    })}
+                                                    className="admin-input text-[10px] py-1.5"
+                                                    placeholder="Enter Guild ID"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">Required_Role_ID</label>
+                                                <input
+                                                    type="text"
+                                                    value={config.auth?.discordRoleId || ''}
+                                                    onChange={(e) => setConfig({
+                                                        ...config,
+                                                        auth: { ...config.auth!, discordRoleId: e.target.value }
+                                                    })}
+                                                    className="admin-input text-[10px] py-1.5"
+                                                    placeholder="Enter Role ID"
+                                                />
+                                            </div>
+                                            <div className="p-2 bg-amber-500/5 border border-amber-500/10 rounded-lg">
+                                                <p className="text-[8px] font-mono text-amber-500/60 uppercase leading-relaxed">
+                                                    Note: Enabling this will verify member roles in the specified server upon login. Requires Supabase Discord Auth to be correctly configured.
+                                                </p>
                                             </div>
                                         </div>
                                     )}

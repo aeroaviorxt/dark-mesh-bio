@@ -56,6 +56,11 @@ export interface MeConfig {
             createdAt: string;
         };
     };
+    auth?: {
+        discordRoleEnabled: boolean;
+        discordServerId?: string;
+        discordRoleId?: string;
+    };
 }
 
 export const defaultMeConfig: MeConfig = {
@@ -93,5 +98,10 @@ export const defaultMeConfig: MeConfig = {
         quotesEnabled: true,
         notesEnabled: true,
         note: { text: "Hello! Check out my work.", createdAt: new Date().toISOString() }
+    },
+    auth: {
+        discordRoleEnabled: false,
+        discordServerId: '',
+        discordRoleId: ''
     }
 };

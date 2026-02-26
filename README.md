@@ -1,156 +1,159 @@
-# avrxt | Full-Stack Infrastructure & Personal Engine
+# 🎴 avrxt-me: Premium Link-in-Bio Engine
 
-![avrxt](https://cdn.avrxt.in/assets/logo-02.png)
-
-A high-performance, premium personal website and service platform built with **Next.js 15+**, **Supabase**, **Tailwind CSS 4**, and **Vercel Analytics**. Designed for speed, security, scalability, and absolute control.
+A state-of-the-art, high-performance Link-in-Bio system built with **Next.js 15+**, **Supabase**, and **Tailwind CSS**. Designed for creators who want a premium, self-hosted digital profile with real-time integrations.
 
 ---
 
-## 🏗️ System Architecture
+## 🚀 Quick Start Instructions
 
-```mermaid
-graph TD
-    User((User)) -->|HTTPS/TLS 1.3| WAF[Cloudflare WAF / Firewall]
-    WAF -->|Traffic Filtering| Vercel[Vercel Edge Network]
-    
-    subgraph "Application Layer (Next.js)"
-        Vercel -->|SSR / ISR| AppRouter[App Router]
-        AppRouter -->|Server Actions| Logic[Business Logic]
-        AppRouter -->|Metadata Engine| SEO[Dynamic SEO/Robots]
-    end
+1.  **Fork & Clone**:
+    ```bash
+    git clone https://github.com/your-username/avrxt-me.git
+    cd avrxt-me
+    npm install
+    ```
+2.  **Environment Setup**:
+    Copy `.env.local.example` (if provided) or create `.env.local` using the template below.
+3.  **Supabase Setup**: Follow the detailed guide below.
+4.  **Run Locally**:
+    ```bash
+    npm run dev
+    ```
 
-    subgraph "Data & Persistence"
-        Logic -->|PostgreSQL Query| SupabaseDB[(Supabase DB)]
-        Logic -->|Auth / JWT| SupabaseAuth[Supabase Auth]
-        Logic -->|Blob Storage| SupabaseStorage[(Supabase Storage)]
-    end
+---
 
-    subgraph "External Integrations"
-        Logic -->|Lead Capture| GSheets[(Google Sheets API)]
-        Logic -->|SMTP / API| Resend[(Resend Email)]
-        Logic -->|Payment Gateway| Razorpay[(Razorpay API)]
-    end
+## 🏗️ Supabase Setup Instructions
 
-    Admin((Admin)) -->|Verified Auth| AdminPanels[Admin Dashboards]
-    AdminPanels --> Logic
+1.  **Create Project**: Sign up at [Supabase](https://supabase.com) and create a new project.
+2.  **SQL Execution**: Open the **SQL Editor** in your Supabase dashboard and paste the following script to initialize your database:
 
-    style SEO fill:#f9f,stroke:#333,stroke-width:2px
-    style WAF fill:#f60,stroke:#333,stroke-width:2px
-    style Vercel fill:#000,stroke:#fff,color:#fff
+```sql
+-- avrxt-me Supabase Schema Setup
+
+-- 1. me_config table (Core Configuration)
+CREATE TABLE IF NOT EXISTS public.me_config (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    key TEXT UNIQUE NOT NULL,
+    data JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.me_config ENABLE ROW LEVEL SECURITY;
+
+-- 2. spotify_tokens table
+CREATE TABLE IF NOT EXISTS public.spotify_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    access_token TEXT NOT NULL,
+    refresh_token TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.spotify_tokens ENABLE ROW LEVEL SECURITY;
+
+-- 3. spotify_history table
+CREATE TABLE IF NOT EXISTS public.spotify_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    song_name TEXT NOT NULL,
+    artist TEXT NOT NULL,
+    cover_url TEXT,
+    played_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(song_name, artist)
+);
+
+ALTER TABLE public.spotify_history ENABLE ROW LEVEL SECURITY;
+
+-- RLS POLICIES
+CREATE POLICY "Public can read config" ON public.me_config FOR SELECT USING (true);
+CREATE POLICY "Auth users can modify config" ON public.me_config FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Auth users can see tokens" ON public.spotify_tokens FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Public can see history" ON public.spotify_history FOR SELECT USING (true);
+CREATE POLICY "Auth users can update history" ON public.spotify_history FOR ALL USING (auth.role() = 'authenticated');
+
+-- Initial Seed
+INSERT INTO public.me_config (key, data)
+VALUES ('main_config', '{
+    "profile": {
+        "handle": "YourName",
+        "bio": "Open Source Link-in-Bio Engine",
+        "avatarUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop",
+        "bannerUrl": "",
+        "location": "Global",
+        "weatherEnabled": false,
+        "presence": { "mode": "manual", "discordId": "" },
+        "status": { "text": "Live", "color": "green" }
+    },
+    "links": [],
+    "music": { "title": "Welcome", "artist": "Setup your music", "coverUrl": "", "audioUrl": "", "spotifyEnabled": false },
+    "gallery": [],
+    "resources": [],
+    "widgets": { "quotesEnabled": true, "notesEnabled": false },
+    "auth": { "discordRoleEnabled": false, "discordServerId": "", "discordRoleId": "" }
+}') ON CONFLICT (key) DO NOTHING;
 ```
 
----
-
-## 🚀 Key Features
-
-### 🎯 Core Pages & Functionality
-- **Landing Page (`/`)**: High-impact hero section with glassmorphism, tech stack matrices, and production metrics.
-- **Profile Node (`/me`)**: Immersive "Link in Bio" ecosystem with **Real-Time Spotify Synchronization**, 3D recently played cards, and newsletter terminal.
-- **Technical Library (`/docs`)**: Markdown-powered documentation system with professional SEO and admin controls.
-- **Interaction Hub (`/guestbook`)**: Verified community messaging system via GitHub OAuth.
-- **Project Intake (`/hireme`)**: Advanced budget/timeline estimator for service inquiries.
-
-### 🎵 Music Synchronization Engine
-- **Live_Spotify Protocol**: Real-time polling of Spotify playback status with dynamic progress bars.
-- **Intelligent Dual-Buffer**: Automatic transition between Live Spotify and local Uploaded Music frequency when offline.
-- **Recently_Synchronized 3D Cards**: Historical playback memory with "Last Seen" timestamps and immersive 3D hover interactions.
-- **Visual Flow Bars**: Premium CSS-animated gradient flow on all music progress indicators.
-
-```mermaid
-graph LR
-    SpotifyAPI((Spotify API)) -->|OAuth/Refresh| SyncEngine[Music Sync Engine]
-    SyncEngine -->|Playing| UI_Live[Live Spotify Card]
-    SyncEngine -->|Paused/Offline| Fallback[Local Upload Fallback]
-    SyncEngine -->|DB Upsert| Supabase[(Supabase History)]
-    Supabase -->|Recently Played| UI_3D[Recently Synchronized 3D Card]
-    
-    style UI_Live fill:#1DB954,stroke:#333,color:#000
-    style Fallback fill:#fff,stroke:#333,color:#000
-    style SpotifyAPI fill:#1DB954,stroke:#333,color:#fff
-```
-
-### ☁️ Cloud Engineering (`/cloud`)
-Premium tier-based service architecture for:
-- **Discord Bot Development**: Moderation, AI Dashboards, and Custom Neural Architectures.
-- **Website Re-Design**: UI/UX overhauls and performance refactoring.
-- **Infrastructure Maintenance**: 24/7 monitoring and security hardening.
-
-### 🔐 Security & Privacy (Harden Layer)
-- **Zero-Index Protocol**: Admin endpoints and sensitive success routes are hardcoded with `robots: { index: false }` and disallowed via `robots.ts`.
-- **Infrastructure Hardening**: Enforced TLS 1.3, CSP headers, and Cloudflare WAF protection.
-- **Data Governance**: Full compliance with **DPDP Act 2023** and **GDPR**.
-- **Secure Payments**: 256-bit SSL encrypted Razorpay integration with automated non-refundability notices.
-
-### 📈 Pro-Level SEO
-- **Dynamic Sitemap**: Automatically generated `sitemap.ts` that crawls base routes and dynamic Cloud services.
-- **Metadata Objects**: Server-side metadata injection for high-fidelity social sharing and search ranking.
-- **Dynamic Robots**: Programmatic `robots.ts` to manage search engine crawl budget efficiently.
+3.  **Storage Buckets**:
+    - Go to **Storage**.
+    - Create a new bucket named `images`.
+    - Set the bucket to **Public**.
+4.  **Auth Configuration**:
+    - Go to **Authentication -> Providers**.
+    - **GitHub**: Enable it and add your Client ID and Secret (from GitHub Developer Settings).
+    - **Discord**: Enable it and add your Client ID and Secret (from Discord Developer Portal).
+    - **Redirect URI**: Set your Supabase Redirect URI (found in Supabase Auth settings) in your GitHub/Discord app settings. It usually looks like:
+      `https://your-project-id.supabase.co/auth/v1/callback`
 
 ---
 
-## 🛠️ Technology Stack
+## 🎧 Spotify Setup Instructions
 
-| Layer | Technologies |
-|--- |--- |
-| **Frontend** | Next.js 15+, React 19, Tailwind CSS 4, Lucide |
-| **Backend** | Next.js Server Actions, Node.js |
-| **Database** | Supabase (PostgreSQL), Realtime |
-| **Auth** | Supabase Auth, GitHub OAuth |
-| **Communications** | Resend API, Google Sheets API |
-| **Payments** | Razorpay SDK |
-| **Observability** | Vercel Analytics, Vercel Speed Insights |
+1.  Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+2.  **Create an App**.
+3.  **Client ID & Secret**: Copy these into your `.env.local`.
+4.  **Redirect URIs**: Add the following:
+    - `http://localhost:3000/api/spotify/callback` (Local)
+    - `https://your-domain.com/api/spotify/callback` (Production)
+5.  **Usage**: In your admin panel, click "Connect Spotify" to authorize.
 
 ---
 
-## 🏗️ Project Structure
+## 🤖 Discord OAuth & Role Auth
 
-```bash
-src/
-├── app/
-│   ├── (legal)/         # Privacy, Terms, Refund, Security pages
-│   ├── actions/        # Secured Server Actions (Cloud, Cupcake, Docs)
-│   ├── admin/          # Multi-node admin dashboards
-│   ├── cloud/          # Cloud services & payment infrastructure
-│   ├── me/             # Personalized profile & bio terminal
-│   ├── robots.ts       # Dynamic Robots configuration
-│   └── sitemap.ts      # Dynamic Sitemap generator
-├── components/         # Premium UI Components (Reveal, Spotlight, etc.)
-├── lib/               # Shared logic & Supabase client
-└── utils/             # Helper functions & constants
-```
+1.  Go to the [Discord Developer Portal](https://discord.com/developers/applications).
+2.  **Client ID & Secret**: Copy these to your Supabase Auth settings.
+3.  **Redirect URIs**:
+    - Add `https://your-project-id.supabase.co/auth/v1/callback` to your Discord App OAuth2 settings.
+4.  **Presence System (Lanyard)**:
+    - **IMPORTANT**: To use the real-time presence system, you **MUST** join the [Lanyard Discord Server](https://discord.gg/lanyard).
+    - The system uses the [Lanyard API](https://github.com/Phineas/lanyard) to fetch your status, activities, and Spotify data via WebSockets.
+5.  **Discord Bot (Optional for Role-Based Auth)**:
+    - Create a Bot in your application.
+    - Copy the **Bot Token** to your `.env.local` as `DISCORD_BOT_TOKEN`.
+    - Invite the bot to your server with `Guild Members` intent.
+    - Use the **Security Protocols** section in the Admin Panel to restrict access to a specific Server ID and Role ID.
 
 ---
 
-## ⚙️ Setup & Deployment
+## � YouTube Data API Setup
 
-1. **Clone & Install**:
-   ```bash
-   git clone https://github.com/avrxtcloud/avrxt-in.git
-   npm install
-   ```
-
-2. **Environment**: Configure `.env.local` with Supabase, Resend, Razorpay, and Google Service Account credentials.
-
-3. **Deploy**: Optimized for Vercel with automatic CI/CD on `main` and `development` branches.
+1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2.  **Create a Project**.
+3.  **Enable API**: Search for "YouTube Data API v3" and enable it.
+4.  **Credentials**: Create an **API Key**.
+5.  Copy the Key to your `.env.local` as `YOUTUBE_API_KEY`. This allows you to search for music tracks in the admin panel.
 
 ---
 
-## 🎨 Design Philosophy
-The system follows a **"Dark Mesh"** design language:
-- **Performance**: Sub-second LCP (Largest Contentful Paint).
-- **Aesthetics**: Glassmorphism, blurred backdrop filters, and typography-driven layouts.
-- **Responsiveness**: Fluid scaling from 320px to 4K displays.
+## � Redirect URL Examples
+
+| Service | Environment | Redirect URL |
+| :--- | :--- | :--- |
+| **Supabase Auth** (GitHub/Discord) | Project Settings | `https://your-project.supabase.co/auth/v1/callback` |
+| **Spotify** | App Dashboard | `http://localhost:3000/api/spotify/callback` |
+| **Spotify** | Production | `https://your-domain.com/api/spotify/callback` |
+| **Supabase Site URL** | Auth Settings | `https://your-domain.com` |
 
 ---
 
-## 📝 License & Contact
-**PROPRIETARY & CONFIDENTIAL**  
-Copyright © 2026 **@avrxt**. All rights reserved.
-
-This project is strictly for the exclusive use of **@avrxt**. Unauthorized copying, modification, distribution, or any form of reproduction of this project (source code, design, or architecture) without express written permission is a violation of international intellectual property laws.
-
-⚠️ **LEGAL NOTICE**: Any unauthorized usage or duplication of this project will lead to immediate **legal action**.
-
-**Developer**: [@avrxt](https://instagram.com/aviorxt) | [support@avrxt.in](mailto:support@avrxt.in)
-
-*Last Updated: February 25, 2026*
+## 📝 License
+MIT License. Created by [avrxtcloud](https://github.com/avrxtcloud).

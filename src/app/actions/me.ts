@@ -24,6 +24,32 @@ export async function getMeConfigAction(): Promise<MeConfig> {
 export async function saveMeConfigAction(config: MeConfig) {
     const supabase = await createClient();
 
+    // 1. Basic User Check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'UNCORRELATED_SESSION' };
+
+    // 2. Discord Role Check (if currently enabled in DB)
+    const currentConfig = await getMeConfigAction();
+    if (currentConfig.auth?.discordRoleEnabled) {
+        const discordIdentity = user.identities?.find(id => id.provider === 'discord');
+        if (!discordIdentity) return { error: 'DISCORD_AUTH_REQUIRED' };
+
+        const guildId = currentConfig.auth.discordServerId;
+        const roleId = currentConfig.auth.discordRoleId;
+
+        if (guildId && roleId) {
+            const { checkDiscordRole } = await import('@/utils/discord');
+            const hasRole = await checkDiscordRole(
+                guildId,
+                discordIdentity.id,
+                roleId
+            );
+            if (!hasRole) return { error: 'UNAUTHORIZED_ACCESS' };
+        } else {
+            return { error: 'DISCORD_AUTH_CONFIG_INCOMPLETE' };
+        }
+    }
+
     const { error } = await supabase
         .from('me_config')
         .upsert({
