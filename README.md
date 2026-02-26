@@ -56,7 +56,7 @@
 
 ## 🔗 Live Connections
 - **Official Identity**: [avrxt.in](https://avrxt.in)
-- **Instagram Protocol**: [@avr.ms](https://instagram.com/avr.ms)
+- **Instagram Protocol**: [@avr.me](https://instagram.com/avr.me)
 - **Engineering Core**: [aviorxt](https://github.com/aviorxt)
 
 ---
