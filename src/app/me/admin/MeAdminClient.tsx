@@ -625,9 +625,9 @@ export default function MeAdminClient({ initialConfig, isSpotifyConnected }: MeA
                                         </div>
                                     )}
 
-                                    {/* Selected Song Preview */}
-                                    <div className="p-3 rounded-xl bg-black/40 border border-white/5">
-                                        <div className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest mb-2">Current_Freq_Preview</div>
+                                    {/* Selected Song Preview + Editable Title/Artist */}
+                                    <div className="p-3 rounded-xl bg-black/40 border border-white/5 space-y-3">
+                                        <div className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest">Current_Freq_Preview</div>
                                         <div className="flex items-center gap-3">
                                             {config.music.youtubeVideoId ? (
                                                 <div className="relative w-16 h-9 rounded overflow-hidden border border-red-500/20 shrink-0">
@@ -641,14 +641,26 @@ export default function MeAdminClient({ initialConfig, isSpotifyConnected }: MeA
                                                     <Youtube size={12} className="text-zinc-700" />
                                                 </div>
                                             )}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-[10px] font-bold text-white truncate">{config.music.title}</div>
-                                                <div className="text-[8px] font-mono text-zinc-500 truncate">{config.music.artist}</div>
-                                                {config.music.youtubeVideoId && (
-                                                    <div className="text-[7px] font-mono text-red-500/60 mt-0.5">yt:{config.music.youtubeVideoId}</div>
-                                                )}
+                                            <div className="flex-1 min-w-0 space-y-1.5">
+                                                <input
+                                                    type="text"
+                                                    value={config.music.title}
+                                                    onChange={(e) => setConfig({ ...config, music: { ...config.music, title: e.target.value } })}
+                                                    className="admin-input py-1.5 text-[10px] font-bold uppercase tracking-wider"
+                                                    placeholder="Song Title"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={config.music.artist}
+                                                    onChange={(e) => setConfig({ ...config, music: { ...config.music, artist: e.target.value } })}
+                                                    className="admin-input py-1.5 text-[9px] font-mono"
+                                                    placeholder="Artist Name"
+                                                />
                                             </div>
                                         </div>
+                                        {config.music.youtubeVideoId && (
+                                            <div className="text-[7px] font-mono text-red-500/40 pt-1">yt_id:{config.music.youtubeVideoId}</div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

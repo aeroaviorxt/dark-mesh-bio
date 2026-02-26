@@ -29,6 +29,10 @@ export default function MeClient({ initialConfig }: MeClientProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const audioRef = useRef<HTMLAudioElement>(null);
+    const ytIframeRef = useRef<HTMLIFrameElement>(null);
+    const [isYtPlaying, setIsYtPlaying] = useState(false);
+    const ytProgressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+    const [ytProgress, setYtProgress] = useState(0);
 
     useEffect(() => {
         const audio = audioRef.current;
@@ -57,15 +61,42 @@ export default function MeClient({ initialConfig }: MeClientProps) {
     const togglePlay = () => {
         const audio = audioRef.current;
         if (!audio) return;
-
         if (audio.paused) {
-            audio.play().catch(() => { /* Auto-play policy might block */ });
+            audio.play().catch(() => { });
             setIsPlaying(true);
             setIsImmersive(true);
         } else {
             audio.pause();
             setIsPlaying(false);
             setIsImmersive(false);
+        }
+    };
+
+    // YouTube iframe postMessage play/pause
+    const toggleYtPlay = () => {
+        const iframe = ytIframeRef.current;
+        if (!iframe?.contentWindow) return;
+        if (isYtPlaying) {
+            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: '' }), '*');
+            setIsYtPlaying(false);
+            setIsImmersive(false);
+            if (ytProgressTimer.current) clearInterval(ytProgressTimer.current);
+        } else {
+            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: '' }), '*');
+            setIsYtPlaying(true);
+            setIsImmersive(true);
+            // Animate progress bar locally (YouTube doesn't expose currentTime via postMessage)
+            ytProgressTimer.current = setInterval(() => {
+                setYtProgress(p => {
+                    if (p >= 100) {
+                        clearInterval(ytProgressTimer.current!);
+                        setIsYtPlaying(false);
+                        setIsImmersive(false);
+                        return 0;
+                    }
+                    return p + 0.05; // ~3 minute song assumption; visual only
+                });
+            }, 1000);
         }
     };
 
@@ -564,10 +595,17 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                                 </div>
                                 {(!config.music.spotifyEnabled || !spotifyData?.isPlaying) ? (
                                     <button
-                                        onClick={togglePlay}
-                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-white text-black hover:scale-110 transition-transform shrink-0 shadow-xl"
+                                        onClick={config.music.youtubeVideoId ? toggleYtPlay : togglePlay}
+                                        className={cn(
+                                            "w-8 h-8 flex items-center justify-center rounded-full hover:scale-110 transition-all shrink-0 shadow-xl",
+                                            (isPlaying || isYtPlaying)
+                                                ? "bg-white text-black"
+                                                : "bg-white text-black"
+                                        )}
                                     >
-                                        {isPlaying ? <Pause className="w-3.5 h-3.5 fill-black" /> : <Play className="w-3.5 h-3.5 fill-black ml-0.5" />}
+                                        {(config.music.youtubeVideoId ? isYtPlaying : isPlaying)
+                                            ? <Pause className="w-3.5 h-3.5 fill-black" />
+                                            : <Play className="w-3.5 h-3.5 fill-black ml-0.5" />}
                                     </button>
                                 ) : (
                                     spotifyData?.songUrl && (
@@ -610,23 +648,27 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                                 </div>
                             )}
 
-                            {/* Play section: YouTube embed if videoId set, else audio fallback */}
+                            {/* Play section: YouTube audio (hidden) or legacy audio fallback */}
                             {(!config.music.spotifyEnabled || !spotifyData?.isPlaying) && (
                                 config.music.youtubeVideoId ? (
-                                    /* ── YouTube Full Player ── */
-                                    <div className="mt-3">
-                                        <div className="relative w-full rounded-xl overflow-hidden border border-white/5 bg-black" style={{ aspectRatio: '16/9' }}>
-                                            <iframe
-                                                src={`https://www.youtube-nocookie.com/embed/${config.music.youtubeVideoId}?rel=0&modestbranding=1&color=white`}
-                                                title={config.music.title}
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                allowFullScreen
-                                                className="absolute inset-0 w-full h-full"
+                                    /* ── YouTube Audio Mode — animated progress bar ── */
+                                    <div className="mt-4 relative">
+                                        <div className="w-full h-[2px] bg-white/5 rounded-full overflow-hidden">
+                                            <div
+                                                className={cn(
+                                                    "h-full transition-all duration-1000",
+                                                    isYtPlaying
+                                                        ? "animate-progress-flow bg-white shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                                                        : "bg-zinc-700"
+                                                )}
+                                                style={{ width: `${ytProgress}%` }}
                                             />
                                         </div>
                                         <div className="flex items-center gap-1.5 mt-2">
-                                            <div className="w-1 h-1 rounded-full bg-red-500" />
-                                            <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">Full_Song · YouTube</span>
+                                            <div className={cn("w-1 h-1 rounded-full transition-colors", isYtPlaying ? "bg-red-500 animate-pulse" : "bg-zinc-700")} />
+                                            <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">
+                                                {isYtPlaying ? 'Playing · YouTube' : 'Full_Song · YouTube'}
+                                            </span>
                                         </div>
                                     </div>
                                 ) : (
@@ -635,7 +677,7 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                                         <div className="w-full h-[2px] bg-white/5 rounded-full overflow-hidden relative">
                                             <div
                                                 className={cn(
-                                                    "h-full transition-all duration-300 shadow-[0_0_8px_#ffffff20]",
+                                                    "h-full transition-all duration-300",
                                                     isPlaying ? "animate-progress-flow bg-white shadow-[0_0_8px_#ffffff]" : "bg-zinc-600"
                                                 )}
                                                 style={{ width: `${progress}%` }}
@@ -656,6 +698,18 @@ export default function MeClient({ initialConfig }: MeClientProps) {
 
                         </div>
                     </div>
+
+                    {/* Hidden YouTube iframe — audio plays here invisibly */}
+                    {config.music.youtubeVideoId && (
+                        <iframe
+                            ref={ytIframeRef}
+                            src={`https://www.youtube-nocookie.com/embed/${config.music.youtubeVideoId}?enablejsapi=1&controls=0&rel=0&modestbranding=1`}
+                            title="yt-audio"
+                            allow="autoplay"
+                            style={{ position: 'absolute', width: '1px', height: '1px', opacity: 0, pointerEvents: 'none', left: '-9999px', top: '-9999px' }}
+                            aria-hidden="true"
+                        />
+                    )}
                 </div>
 
                 {/* Recently Played Section (New 3D Section) */}
