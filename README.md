@@ -4,7 +4,15 @@ A state-of-the-art, high-performance Link-in-Bio system built with **Next.js 15+
 
 ---
 
-## 🚀 Quick Start Instructions
+## � Live Demo & Socials
+- **Live Demo**: [https://avrxt.in/me](https://avrxt.in/me)
+- **Instagram**: [@avr.ms](https://instagram.com/avr.ms)
+- **GitHub**: [aviorxt](https://github.com/aviorxt)
+- **Official Website**: [avrxt.in](https://avrxt.in)
+
+---
+
+## �🚀 Quick Start Instructions
 
 1.  **Fork & Clone**:
     ```bash
