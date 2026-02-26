@@ -102,6 +102,34 @@ This project is open-source and dual-licensed for maximum freedom.
 - **Contributing**: Check our [Contributing Guide](CONTRIBUTING.md)
 - **Security**: View our [Security Policy](SECURITY.md)
 
+---
+
+## 💖 Special Thanks & Sponsorships
+
+### 🚀 Sponsored By
+A huge thank you to our infrastructure partners for supporting the open-source community.
+
+<div align="left">
+  <a href="https://vercel.com">
+    <img src="https://vercel.com/oss/program-badge.svg" alt="Vercel" width="160" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://www.digitalocean.com">
+    <img src="https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%201.svg" alt="DigitalOcean" width="160" />
+  </a>
+</div>
+
+<br />
+
+### ✨ Special Contributors
+This project wouldn't be possible without the inspiration and support from:
+
+- **[@ebn](https://www.instagram.com/eb_nnn_?igsh=MW96OGFrcXBsMHZhZg==)**
+- **[@arun](https://www.instagram.com/arun._ooi?igsh=azA0d2hvYWM4M25y)**
+- **[@aptha](https://www.instagram.com/_aptha?igsh=bWswcXpzenl2bGd2)**
+
+---
+
 <div align="center">
   <br />
   <p>Built with ❤️ by <b>avrxtcloud</b></p>
