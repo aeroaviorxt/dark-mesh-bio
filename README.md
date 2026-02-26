@@ -1,6 +1,6 @@
 <div align="center">
 
-![dark_mesh_bio_banner](file:///C:/Users/Administrator/.gemini/antigravity/brain/a63efce1-41f8-412a-98d7-0989e7767659/repo_banner_premium_1772136309082.png)
+![dark_mesh_bio_banner](https://cdn.discordapp.com/attachments/1476677116354367520/1476677212257386788/IMG_20260227_015700.png?ex=69a1fe52&is=69a0acd2&hm=c2e512294c12f5c97e3d7691253c55a73041cec3282f46bb4a4c263a899bad19&)
 
 # 🎴 Dark Mesh Bio
 ### The Ultimate Premium Link-in-Bio Engine
@@ -11,6 +11,34 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
 [**Explore Live Demo**](https://avrxt.in/me)  •  [**Full Setup Guide**](SETUP.md)  •  [**Community**](COLLABORATION.md)
+
+</div>
+
+---
+
+## 📸 Feature Showcase
+
+<div align="center">
+
+### 🎨 Modular Profile Design
+![Feature 1](https://cdn.discordapp.com/attachments/1476677116354367520/1476678544334786580/IMG_20260227_020055.png?ex=69a1ff90&is=69a0ae10&hm=d89ffc43f70f94c99a02634d517661c198964a6c42544b8696f35cbae01405b6&)
+*A sleek, high-end profile with glassmorphic cards and real-time status telemetry.*
+
+### 🛠️ Advanced Admin Dashboard
+![Feature 2](https://cdn.discordapp.com/attachments/1476677116354367520/1476678713226690661/IMG_20260227_020130.png?ex=69a1ffb8&is=69a0ae38&hm=82fec79ad6a9f112bf38faf4e2ab23ed076e7b31d79a7e1d13200e43e331a5a4&)
+*Orchestrate your entire digital identity from a desktop-class command center.*
+
+### 📱 Perfect Mobile Architecture
+![Feature 3](https://cdn.discordapp.com/attachments/1476677116354367520/1476678876599156839/IMG_20260227_020239.png?ex=69a1ffdf&is=69a0ae5f&hm=82ddce9b5d3f431efd4114d58a72a72330b658140c3f3b728c5dcd7c70796166&)
+*Optimized for any screen. Stunning visuals wherever your audience finds you.*
+
+### 🎧 Haptic Music Layer
+![Feature 4](https://cdn.discordapp.com/attachments/1476677116354367520/1476679054546698343/IMG_20260227_020202.png?ex=69a20009&is=69a0ae89&hm=3096ed35290980f41f2ab20b1f2135f232758df97db594c75c486f37092392c2&)
+*Dynamic Spotify tracking with 3D cards that react to every beat.*
+
+### 🔐 Security & Customization
+![Feature 5](https://cdn.discordapp.com/attachments/1476677116354367520/1476679610568802314/IMG_20260227_020645.png?ex=69a2008e&is=69a0af0e&hm=8c45c9d0ffd0d54b50a70a7367c5cdc6c30f431f80eba1c9390ddaca1e9e2813&)
+*Enterprise-grade tools for profiles that are uniquely yours.*
 
 </div>
 
@@ -54,21 +82,6 @@
 | `SPOTIFY_CLIENT_SECRET` | Music Integration | *Optional* |
 | `DISCORD_GUILD_ID` | Security Protocol | *Optional* |
 | `DISCORD_ROLE_ID` | Security Protocol | *Optional* |
-
----
-
-## 🛠️ Setup Guide
-
-### 1. 🏗️ Database Setup
-1. Create a project at [Supabase](https://supabase.com).
-2. Run the `setup.sql` script in the **SQL Editor**.
-3. Create a public bucket named `images` in **Storage**.
-
-### 2. 🔑 Environment Configuration
-Copy `.env.local.example` and fill in your Supabase, Spotify, and YouTube credentials.
-
-### 3. 🚀 Deployment
-Deploy to **Vercel** and set your environment variables. Ensure your Redirect URIs match your deployment domain.
 
 ---
 
