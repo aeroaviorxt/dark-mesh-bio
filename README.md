@@ -8,7 +8,7 @@ A state-of-the-art, high-performance Link-in-Bio system built with **Next.js 15+
 
 1.  **Fork & Clone**:
     ```bash
-    git clone https://github.com/your-username/avrxt-me.git
+    git clone https://github.com/aviorxtaero/avrxt-me.git
     cd avrxt-me
     npm install
     ```

@@ -28,26 +28,21 @@ export async function saveMeConfigAction(config: MeConfig) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'UNCORRELATED_SESSION' };
 
-    // 2. Discord Role Check (if currently enabled in DB)
-    const currentConfig = await getMeConfigAction();
-    if (currentConfig.auth?.discordRoleEnabled) {
+    // 2. Discord Role Check (via Environment Variables)
+    const requiredGuildId = process.env.DISCORD_GUILD_ID;
+    const requiredRoleId = process.env.DISCORD_ROLE_ID;
+
+    if (requiredGuildId && requiredRoleId) {
         const discordIdentity = user.identities?.find(id => id.provider === 'discord');
         if (!discordIdentity) return { error: 'DISCORD_AUTH_REQUIRED' };
 
-        const guildId = currentConfig.auth.discordServerId;
-        const roleId = currentConfig.auth.discordRoleId;
-
-        if (guildId && roleId) {
-            const { checkDiscordRole } = await import('@/utils/discord');
-            const hasRole = await checkDiscordRole(
-                guildId,
-                discordIdentity.id,
-                roleId
-            );
-            if (!hasRole) return { error: 'UNAUTHORIZED_ACCESS' };
-        } else {
-            return { error: 'DISCORD_AUTH_CONFIG_INCOMPLETE' };
-        }
+        const { checkDiscordRole } = await import('@/utils/discord');
+        const hasRole = await checkDiscordRole(
+            requiredGuildId,
+            discordIdentity.id,
+            requiredRoleId
+        );
+        if (!hasRole) return { error: 'UNAUTHORIZED_ACCESS' };
     }
 
     const { error } = await supabase
