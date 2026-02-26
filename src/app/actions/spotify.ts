@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server';
+import { searchSpotify } from '@/lib/spotify';
 import { revalidatePath } from 'next/cache';
 
 export async function disconnectSpotifyAction() {
@@ -18,4 +19,12 @@ export async function disconnectSpotifyAction() {
 
     revalidatePath('/me/admin');
     return { success: true };
+}
+
+export async function searchSpotifyAction(query: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    return await searchSpotify(query);
 }

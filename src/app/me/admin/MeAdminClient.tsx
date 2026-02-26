@@ -13,7 +13,8 @@ import { MeConfig } from '@/lib/me-config';
 import { saveMeConfigAction } from '@/app/actions/me';
 import { logout } from '@/app/actions/auth';
 import { createClient } from '@/utils/supabase/client';
-import { disconnectSpotifyAction } from '@/app/actions/spotify';
+import { disconnectSpotifyAction, searchSpotifyAction } from '@/app/actions/spotify';
+import { Search } from 'lucide-react';
 
 interface MeAdminClientProps {
     initialConfig: MeConfig;
@@ -22,6 +23,9 @@ interface MeAdminClientProps {
 
 export default function MeAdminClient({ initialConfig, isSpotifyConnected }: MeAdminClientProps) {
     const [config, setConfig] = useState<MeConfig>(initialConfig);
+    const [spotifySearchQuery, setSpotifySearchQuery] = useState('');
+    const [spotifyResults, setSpotifyResults] = useState<any[]>([]);
+    const [isSearchingSpotify, setIsSearchingSpotify] = useState(false);
     const [saveStatus, setSaveStatus] = useState<string>('');
     const [isPending, setIsPending] = useState(false);
 
@@ -533,508 +537,547 @@ export default function MeAdminClient({ initialConfig, isSpotifyConnected }: MeA
                                     </div>
                                 </div>
 
-                                {!config.music.spotifyEnabled && (
-                                    <div className="space-y-3 pt-2">
+                                {/* Spotify Search Section */}
+                                <div className="space-y-3 pt-4">
+                                    <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest font-mono">Search_Frequency</h3>
+                                    <div className="relative group">
                                         <input
                                             type="text"
-                                            value={config.music.title}
-                                            onChange={(e) => setConfig({ ...config, music: { ...config.music, title: e.target.value } })}
-                                            className="admin-input"
-                                            placeholder="Track Name"
+                                            value={spotifySearchQuery}
+                                            onChange={(e) => setSpotifySearchQuery(e.target.value)}
+                                            onKeyDown={async (e) => {
+                                                if (e.key === 'Enter') {
+                                                    setIsSearchingSpotify(true);
+                                                    const results = await searchSpotifyAction(spotifySearchQuery);
+                                                    if (Array.isArray(results)) setSpotifyResults(results);
+                                                    setIsSearchingSpotify(false);
+                                                }
+                                            }}
+                                            className="admin-input pr-10"
+                                            placeholder="Search Spotify Tracks..."
                                         />
-                                        <input
-                                            type="text"
-                                            value={config.music.artist}
-                                            onChange={(e) => setConfig({ ...config, music: { ...config.music, artist: e.target.value } })}
-                                            className="admin-input"
-                                            placeholder="Artist"
-                                        />
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="space-y-2">
-                                                <input
-                                                    type="text"
-                                                    value={config.music.coverUrl}
-                                                    onChange={(e) => setConfig({ ...config, music: { ...config.music, coverUrl: e.target.value } })}
-                                                    className="admin-input"
-                                                    placeholder="Cover URL"
-                                                />
-                                                <label className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg cursor-pointer transition-all border border-white/5">
-                                                    <Upload size={12} className="text-zinc-400" />
-                                                    <span className="text-[10px] font-mono font-bold text-zinc-300">UPLOAD_COVER</span>
-                                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'music.coverUrl')} />
-                                                </label>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <input
-                                                    type="text"
-                                                    value={config.music.audioUrl}
-                                                    onChange={(e) => setConfig({ ...config, music: { ...config.music, audioUrl: e.target.value } })}
-                                                    className="admin-input"
-                                                    placeholder="Audio URL"
-                                                />
-                                                <label className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg cursor-pointer transition-all border border-white/5">
-                                                    <Upload size={12} className="text-zinc-400" />
-                                                    <span className="text-[10px] font-mono font-bold text-zinc-300">UPLOAD_AUDIO</span>
-                                                    <input type="file" className="hidden" accept=".mp3,.wav,.m4a" onChange={(e) => handleFileUpload(e, 'music.audioUrl')} />
-                                                </label>
-                                            </div>
+                                        <button
+                                            onClick={async () => {
+                                                setIsSearchingSpotify(true);
+                                                const results = await searchSpotifyAction(spotifySearchQuery);
+                                                if (Array.isArray(results)) setSpotifyResults(results);
+                                                setIsSearchingSpotify(false);
+                                            }}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 group-hover:text-emerald-500 transition-colors"
+                                        >
+                                            {isSearchingSpotify ? <div className="w-3 h-3 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div> : <Search size={14} />}
+                                        </button>
+                                    </div>
+
+                                    {/* Results List */}
+                                    {spotifyResults.length > 0 && (
+                                        <div className="max-h-48 overflow-y-auto space-y-2 p-2 rounded-xl bg-black/40 border border-white/5 custom-scrollbar">
+                                            {spotifyResults.map((track) => (
+                                                <button
+                                                    key={track.id}
+                                                    onClick={() => {
+                                                        setConfig({
+                                                            ...config,
+                                                            music: {
+                                                                ...config.music,
+                                                                title: track.name,
+                                                                artist: track.artist,
+                                                                coverUrl: track.coverUrl,
+                                                                audioUrl: track.previewUrl || config.music.audioUrl,
+                                                                spotifyEnabled: false // Switch to fixed song mode
+                                                            }
+                                                        });
+                                                        setSpotifyResults([]);
+                                                        setSpotifySearchQuery('');
+                                                    }}
+                                                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all text-left group"
+                                                >
+                                                    <img src={track.coverUrl} className="w-8 h-8 rounded shrink-0 object-cover" alt="" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-[10px] font-bold text-white uppercase truncate">{track.name}</div>
+                                                        <div className="text-[8px] font-mono text-zinc-500 uppercase truncate">{track.artist}</div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Selection Preview */}
+                                    <div className="p-3 rounded-xl bg-black/40 border border-white/5 flex items-center gap-4">
+                                        <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 shrink-0">
+                                            <img src={config.music.coverUrl} alt="Selection" className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest mb-1">SELECTED_FREQ</div>
+                                            <div className="text-[10px] font-bold text-white uppercase truncate">{config.music.title}</div>
+                                            <div className="text-[8px] font-mono text-zinc-500 uppercase truncate">{config.music.artist}</div>
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        </div>
 
-                        {/* Right Column */}
-                        <div className="space-y-6">
-                            {/* Widget Settings */}
-                            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
-                                <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 font-mono">
-                                    <Activity size={16} className="text-zinc-500" /> Widget_Control
-                                </h2>
-
-                                {/* Quote Toggle */}
-                                <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-bold text-white uppercase tracking-widest">Daily_Quotes</span>
-                                        <span className="text-[8px] font-mono text-zinc-500 uppercase">Updates every 24h</span>
+                                    {/* Manual Tweak */}
+                                    <div className="pt-2">
+                                        <input
+                                            type="text"
+                                            value={config.music.audioUrl}
+                                            onChange={(e) => setConfig({ ...config, music: { ...config.music, audioUrl: e.target.value } })}
+                                            className="admin-input text-[8px]"
+                                            placeholder="Direct Audio URL (Optional)"
+                                        />
                                     </div>
-                                    <button
-                                        onClick={() => setConfig({
-                                            ...config,
-                                            widgets: { ...config?.widgets!, quotesEnabled: !config?.widgets?.quotesEnabled }
-                                        })}
-                                        className={cn(
-                                            "px-3 py-1 rounded-md text-[9px] font-bold font-mono transition-all uppercase",
-                                            config?.widgets?.quotesEnabled ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-zinc-800 text-zinc-500 border border-white/5"
-                                        )}
-                                    >
-                                        {config?.widgets?.quotesEnabled ? 'ENABLED' : 'DISABLED'}
-                                    </button>
                                 </div>
+                            </div>
 
-                                {/* Note Widget */}
-                                <div className="space-y-3 p-3 rounded-xl bg-black/40 border border-white/5">
-                                    <div className="flex items-center justify-between">
+                            {/* Right Column */}
+                            <div className="space-y-6">
+                                {/* Widget Settings */}
+                                <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
+                                    <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 font-mono">
+                                        <Activity size={16} className="text-zinc-500" /> Widget_Control
+                                    </h2>
+
+                                    {/* Quote Toggle */}
+                                    <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest">Profile_Note</span>
-                                            <span className="text-[8px] font-mono text-zinc-500 uppercase">Instagram Style Note</span>
+                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest">Daily_Quotes</span>
+                                            <span className="text-[8px] font-mono text-zinc-500 uppercase">Updates every 24h</span>
                                         </div>
                                         <button
                                             onClick={() => setConfig({
                                                 ...config,
-                                                widgets: { ...config?.widgets!, notesEnabled: !config?.widgets?.notesEnabled }
+                                                widgets: { ...config?.widgets!, quotesEnabled: !config?.widgets?.quotesEnabled }
                                             })}
                                             className={cn(
                                                 "px-3 py-1 rounded-md text-[9px] font-bold font-mono transition-all uppercase",
-                                                config?.widgets?.notesEnabled ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-zinc-800 text-zinc-500 border border-white/5"
+                                                config?.widgets?.quotesEnabled ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-zinc-800 text-zinc-500 border border-white/5"
                                             )}
                                         >
-                                            {config?.widgets?.notesEnabled ? 'ENABLED' : 'DISABLED'}
+                                            {config?.widgets?.quotesEnabled ? 'ENABLED' : 'DISABLED'}
                                         </button>
                                     </div>
 
-                                    {config?.widgets?.notesEnabled && (
-                                        <div className="space-y-2">
-                                            <input
-                                                type="text"
-                                                maxLength={60}
-                                                value={config?.widgets?.note?.text || ''}
-                                                onChange={(e) => setConfig({
-                                                    ...config,
-                                                    widgets: {
-                                                        ...config?.widgets!,
-                                                        note: {
-                                                            text: e.target.value,
-                                                            createdAt: config?.widgets?.note?.createdAt || new Date().toISOString()
-                                                        }
-                                                    }
-                                                })}
-                                                className="admin-input text-[10px]"
-                                                placeholder="What's on your mind? (max 60 chars)"
-                                            />
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[8px] font-mono text-zinc-600">
-                                                    {config?.widgets?.note?.createdAt ? `POSTED: ${new Date(config.widgets.note.createdAt).toLocaleString()}` : 'NEW_NOTE'}
-                                                </span>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => setConfig({
-                                                            ...config,
-                                                            widgets: {
-                                                                ...config?.widgets!,
-                                                                note: {
-                                                                    text: config?.widgets?.note?.text || '',
-                                                                    createdAt: new Date().toISOString()
-                                                                }
-                                                            }
-                                                        })}
-                                                        className="text-[8px] font-mono text-emerald-500 hover:text-emerald-400 uppercase"
-                                                    >
-                                                        [UPDATE_TIME]
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setConfig({
-                                                            ...config,
-                                                            widgets: {
-                                                                ...config?.widgets!,
-                                                                note: { text: '', createdAt: '' }
-                                                            }
-                                                        })}
-                                                        className="text-[8px] font-mono text-red-500 hover:text-red-400 uppercase"
-                                                    >
-                                                        [REMOVE]
-                                                    </button>
-                                                </div>
+                                    {/* Note Widget */}
+                                    <div className="space-y-3 p-3 rounded-xl bg-black/40 border border-white/5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-bold text-white uppercase tracking-widest">Profile_Note</span>
+                                                <span className="text-[8px] font-mono text-zinc-500 uppercase">Instagram Style Note</span>
                                             </div>
+                                            <button
+                                                onClick={() => setConfig({
+                                                    ...config,
+                                                    widgets: { ...config?.widgets!, notesEnabled: !config?.widgets?.notesEnabled }
+                                                })}
+                                                className={cn(
+                                                    "px-3 py-1 rounded-md text-[9px] font-bold font-mono transition-all uppercase",
+                                                    config?.widgets?.notesEnabled ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-zinc-800 text-zinc-500 border border-white/5"
+                                                )}
+                                            >
+                                                {config?.widgets?.notesEnabled ? 'ENABLED' : 'DISABLED'}
+                                            </button>
                                         </div>
-                                    )}
-                                </div>
-                            </div>
 
-                            {/* Links Settings */}
-                            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 font-mono">
-                                        <LinkIcon size={16} className="text-zinc-500" /> Connections
-                                    </h2>
-                                    <button
-                                        onClick={() => {
-                                            const newLinks = [...config.links, { id: Date.now().toString(), name: 'New Link', url: 'https://', type: 'social' as const }];
-                                            setConfig({ ...config, links: newLinks });
-                                            setTimeout(() => {
-                                                const container = document.getElementById('links-container');
-                                                if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-                                            }, 100);
-                                        }}
-                                        className="text-[10px] font-mono px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-all font-bold border border-white/10 uppercase tracking-tighter"
-                                    >
-                                        + ADD_CONNECTION
-                                    </button>
-                                </div>
-                                <div id="links-container" className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {config.links.map((link, idx) => (
-                                        <div key={link.id} className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3 group hover:border-white/20 transition-all">
-                                            <div className="flex justify-between items-center">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex flex-col gap-0.5">
+                                        {config?.widgets?.notesEnabled && (
+                                            <div className="space-y-2">
+                                                <input
+                                                    type="text"
+                                                    maxLength={60}
+                                                    value={config?.widgets?.note?.text || ''}
+                                                    onChange={(e) => setConfig({
+                                                        ...config,
+                                                        widgets: {
+                                                            ...config?.widgets!,
+                                                            note: {
+                                                                text: e.target.value,
+                                                                createdAt: config?.widgets?.note?.createdAt || new Date().toISOString()
+                                                            }
+                                                        }
+                                                    })}
+                                                    className="admin-input text-[10px]"
+                                                    placeholder="What's on your mind? (max 60 chars)"
+                                                />
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[8px] font-mono text-zinc-600">
+                                                        {config?.widgets?.note?.createdAt ? `POSTED: ${new Date(config.widgets.note.createdAt).toLocaleString()}` : 'NEW_NOTE'}
+                                                    </span>
+                                                    <div className="flex gap-2">
                                                         <button
-                                                            disabled={idx === 0}
-                                                            onClick={() => {
-                                                                const newLinks = [...config.links];
-                                                                [newLinks[idx], newLinks[idx - 1]] = [newLinks[idx - 1], newLinks[idx]];
-                                                                setConfig({ ...config, links: newLinks });
-                                                            }}
-                                                            className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
+                                                            onClick={() => setConfig({
+                                                                ...config,
+                                                                widgets: {
+                                                                    ...config?.widgets!,
+                                                                    note: {
+                                                                        text: config?.widgets?.note?.text || '',
+                                                                        createdAt: new Date().toISOString()
+                                                                    }
+                                                                }
+                                                            })}
+                                                            className="text-[8px] font-mono text-emerald-500 hover:text-emerald-400 uppercase"
                                                         >
-                                                            <ArrowUp size={10} />
+                                                            [UPDATE_TIME]
                                                         </button>
                                                         <button
-                                                            disabled={idx === config.links.length - 1}
-                                                            onClick={() => {
-                                                                const newLinks = [...config.links];
-                                                                [newLinks[idx], newLinks[idx + 1]] = [newLinks[idx + 1], newLinks[idx]];
-                                                                setConfig({ ...config, links: newLinks });
-                                                            }}
-                                                            className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
+                                                            onClick={() => setConfig({
+                                                                ...config,
+                                                                widgets: {
+                                                                    ...config?.widgets!,
+                                                                    note: { text: '', createdAt: '' }
+                                                                }
+                                                            })}
+                                                            className="text-[8px] font-mono text-red-500 hover:text-red-400 uppercase"
                                                         >
-                                                            <ArrowDown size={10} />
+                                                            [REMOVE]
                                                         </button>
                                                     </div>
-                                                    <input
-                                                        className="bg-transparent border-none text-[10px] font-bold uppercase tracking-[0.15em] outline-none text-white focus:text-emerald-400 transition-colors"
-                                                        value={link.name}
-                                                        onChange={(e) => {
-                                                            const newLinks = [...config.links];
-                                                            newLinks[idx] = { ...newLinks[idx], name: e.target.value };
-                                                            setConfig({ ...config, links: newLinks });
-                                                        }}
-                                                        placeholder="LABEL"
-                                                    />
                                                 </div>
-                                                <button
-                                                    onClick={() => setConfig({ ...config, links: config.links.filter(l => l.id !== link.id) })}
-                                                    className="text-white/20 hover:text-red-500 transition-all opacity-40 group-hover:opacity-100 p-1"
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <select
-                                                    value={link.icon?.startsWith('http') ? 'Image' : (link.icon || 'ExternalLink')}
-                                                    onChange={(e) => {
-                                                        const newLinks = [...config.links];
-                                                        const val = e.target.value;
-                                                        // If switching to Image, current val might be a name. If switching away, set to name.
-                                                        if (val === 'Image') {
-                                                            // Keep current if it is a URL, else empty
-                                                            newLinks[idx] = { ...newLinks[idx], icon: link.icon?.startsWith('http') ? link.icon : '' };
-                                                        } else {
-                                                            newLinks[idx] = { ...newLinks[idx], icon: val };
-                                                        }
-                                                        setConfig({ ...config, links: newLinks });
-                                                    }}
-                                                    className="bg-zinc-900 border border-white/5 rounded-lg px-2 py-1 text-[10px] font-mono text-zinc-400 outline-none focus:border-white/20"
-                                                >
-                                                    <option value="Instagram">Instagram</option>
-                                                    <option value="Github">Github</option>
-                                                    <option value="Mail">Mail</option>
-                                                    <option value="Discord">Discord</option>
-                                                    <option value="Camera">Camera</option>
-                                                    <option value="BookOpen">BookOpen</option>
-                                                    <option value="ExternalLink">External</option>
-                                                    <option value="Share2">Share</option>
-                                                    <option value="Image">CUSTOM IMG</option>
-                                                </select>
+                                        )}
+                                    </div>
+                                </div>
 
-                                                {(link.icon === 'Image' || link.icon?.startsWith('http') || link.icon === '' && config.links[idx].icon === '') && (
-                                                    <div className="flex items-center gap-1">
+                                {/* Links Settings */}
+                                <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 font-mono">
+                                            <LinkIcon size={16} className="text-zinc-500" /> Connections
+                                        </h2>
+                                        <button
+                                            onClick={() => {
+                                                const newLinks = [...config.links, { id: Date.now().toString(), name: 'New Link', url: 'https://', type: 'social' as const }];
+                                                setConfig({ ...config, links: newLinks });
+                                                setTimeout(() => {
+                                                    const container = document.getElementById('links-container');
+                                                    if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                                                }, 100);
+                                            }}
+                                            className="text-[10px] font-mono px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-all font-bold border border-white/10 uppercase tracking-tighter"
+                                        >
+                                            + ADD_CONNECTION
+                                        </button>
+                                    </div>
+                                    <div id="links-container" className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {config.links.map((link, idx) => (
+                                            <div key={link.id} className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3 group hover:border-white/20 transition-all">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <button
+                                                                disabled={idx === 0}
+                                                                onClick={() => {
+                                                                    const newLinks = [...config.links];
+                                                                    [newLinks[idx], newLinks[idx - 1]] = [newLinks[idx - 1], newLinks[idx]];
+                                                                    setConfig({ ...config, links: newLinks });
+                                                                }}
+                                                                className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
+                                                            >
+                                                                <ArrowUp size={10} />
+                                                            </button>
+                                                            <button
+                                                                disabled={idx === config.links.length - 1}
+                                                                onClick={() => {
+                                                                    const newLinks = [...config.links];
+                                                                    [newLinks[idx], newLinks[idx + 1]] = [newLinks[idx + 1], newLinks[idx]];
+                                                                    setConfig({ ...config, links: newLinks });
+                                                                }}
+                                                                className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
+                                                            >
+                                                                <ArrowDown size={10} />
+                                                            </button>
+                                                        </div>
                                                         <input
-                                                            className="bg-zinc-900/50 border border-white/5 rounded-lg px-2 py-1 text-[10px] w-20"
-                                                            value={link.icon}
+                                                            className="bg-transparent border-none text-[10px] font-bold uppercase tracking-[0.15em] outline-none text-white focus:text-emerald-400 transition-colors"
+                                                            value={link.name}
                                                             onChange={(e) => {
                                                                 const newLinks = [...config.links];
-                                                                newLinks[idx] = { ...newLinks[idx], icon: e.target.value };
+                                                                newLinks[idx] = { ...newLinks[idx], name: e.target.value };
                                                                 setConfig({ ...config, links: newLinks });
                                                             }}
-                                                            placeholder="ICON_URL"
+                                                            placeholder="LABEL"
                                                         />
-                                                        <label className="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg cursor-pointer border border-white/5">
-                                                            <Upload size={10} className="text-zinc-400" />
-                                                            <input
-                                                                type="file"
-                                                                className="hidden"
-                                                                accept="image/*"
-                                                                onChange={(e) => handleFileUpload(e, `link:${link.id}`)}
-                                                            />
-                                                        </label>
                                                     </div>
+                                                    <button
+                                                        onClick={() => setConfig({ ...config, links: config.links.filter(l => l.id !== link.id) })}
+                                                        className="text-white/20 hover:text-red-500 transition-all opacity-40 group-hover:opacity-100 p-1"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <select
+                                                        value={link.icon?.startsWith('http') ? 'Image' : (link.icon || 'ExternalLink')}
+                                                        onChange={(e) => {
+                                                            const newLinks = [...config.links];
+                                                            const val = e.target.value;
+                                                            // If switching to Image, current val might be a name. If switching away, set to name.
+                                                            if (val === 'Image') {
+                                                                // Keep current if it is a URL, else empty
+                                                                newLinks[idx] = { ...newLinks[idx], icon: link.icon?.startsWith('http') ? link.icon : '' };
+                                                            } else {
+                                                                newLinks[idx] = { ...newLinks[idx], icon: val };
+                                                            }
+                                                            setConfig({ ...config, links: newLinks });
+                                                        }}
+                                                        className="bg-zinc-900 border border-white/5 rounded-lg px-2 py-1 text-[10px] font-mono text-zinc-400 outline-none focus:border-white/20"
+                                                    >
+                                                        <option value="Instagram">Instagram</option>
+                                                        <option value="Github">Github</option>
+                                                        <option value="Mail">Mail</option>
+                                                        <option value="Discord">Discord</option>
+                                                        <option value="Camera">Camera</option>
+                                                        <option value="BookOpen">BookOpen</option>
+                                                        <option value="ExternalLink">External</option>
+                                                        <option value="Share2">Share</option>
+                                                        <option value="Image">CUSTOM IMG</option>
+                                                    </select>
+
+                                                    {(link.icon === 'Image' || link.icon?.startsWith('http') || link.icon === '' && config.links[idx].icon === '') && (
+                                                        <div className="flex items-center gap-1">
+                                                            <input
+                                                                className="bg-zinc-900/50 border border-white/5 rounded-lg px-2 py-1 text-[10px] w-20"
+                                                                value={link.icon}
+                                                                onChange={(e) => {
+                                                                    const newLinks = [...config.links];
+                                                                    newLinks[idx] = { ...newLinks[idx], icon: e.target.value };
+                                                                    setConfig({ ...config, links: newLinks });
+                                                                }}
+                                                                placeholder="ICON_URL"
+                                                            />
+                                                            <label className="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg cursor-pointer border border-white/5">
+                                                                <Upload size={10} className="text-zinc-400" />
+                                                                <input
+                                                                    type="file"
+                                                                    className="hidden"
+                                                                    accept="image/*"
+                                                                    onChange={(e) => handleFileUpload(e, `link:${link.id}`)}
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    )}
+                                                    <input
+                                                        className="bg-zinc-900/50 border border-white/5 rounded-lg px-3 py-1.5 text-[10px] font-mono text-zinc-400 focus:text-white outline-none flex-1 focus:border-white/20 transition-all"
+                                                        value={link.url}
+                                                        onChange={(e) => {
+                                                            const newLinks = [...config.links];
+                                                            newLinks[idx] = { ...newLinks[idx], url: e.target.value };
+                                                            setConfig({ ...config, links: newLinks });
+                                                        }}
+                                                        placeholder="URL"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Resources Settings */}
+                                <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 font-mono">
+                                            <Book size={16} className="text-zinc-500" /> Resources
+                                        </h2>
+                                        <button
+                                            onClick={() => {
+                                                const newResources = [...config.resources, { id: Date.now().toString(), title: 'New Resource', url: '/', type: 'doc' as const }];
+                                                setConfig({ ...config, resources: newResources });
+                                                setTimeout(() => {
+                                                    const container = document.getElementById('resources-container');
+                                                    if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                                                }, 100);
+                                            }}
+                                            className="text-[10px] font-mono px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-all font-bold border border-white/10 uppercase tracking-tighter"
+                                        >
+                                            + ADD_CORE_RES
+                                        </button>
+                                    </div>
+                                    <div id="resources-container" className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {config.resources.map((res, idx) => (
+                                            <div key={res.id} className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3 group hover:border-white/20 transition-all">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <button
+                                                                disabled={idx === 0}
+                                                                onClick={() => {
+                                                                    const newRes = [...config.resources];
+                                                                    [newRes[idx], newRes[idx - 1]] = [newRes[idx - 1], newRes[idx]];
+                                                                    setConfig({ ...config, resources: newRes });
+                                                                }}
+                                                                className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
+                                                            >
+                                                                <ArrowUp size={10} />
+                                                            </button>
+                                                            <button
+                                                                disabled={idx === config.resources.length - 1}
+                                                                onClick={() => {
+                                                                    const newRes = [...config.resources];
+                                                                    [newRes[idx], newRes[idx + 1]] = [newRes[idx + 1], newRes[idx]];
+                                                                    setConfig({ ...config, resources: newRes });
+                                                                }}
+                                                                className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
+                                                            >
+                                                                <ArrowDown size={10} />
+                                                            </button>
+                                                        </div>
+                                                        <select
+                                                            value={res.type}
+                                                            onChange={(e) => {
+                                                                const newRes = [...config.resources];
+                                                                newRes[idx] = { ...newRes[idx], type: e.target.value as any };
+                                                                setConfig({ ...config, resources: newRes });
+                                                            }}
+                                                            className="bg-zinc-800 text-[10px] px-2 py-1 rounded-md outline-none border border-white/5 font-mono uppercase text-zinc-400 hover:text-white transition-all cursor-pointer"
+                                                        >
+                                                            <option value="gallery">Gallery</option>
+                                                            <option value="doc">Doc</option>
+                                                            <option value="post">Post</option>
+                                                        </select>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setConfig({ ...config, resources: config.resources.filter(r => r.id !== res.id) })}
+                                                        className="text-white/20 hover:text-red-500 transition-all opacity-40 group-hover:opacity-100 p-1"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <input
+                                                        className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
+                                                        value={res.title}
+                                                        onChange={(e) => {
+                                                            const newRes = [...config.resources];
+                                                            newRes[idx] = { ...newRes[idx], title: e.target.value };
+                                                            setConfig({ ...config, resources: newRes });
+                                                        }}
+                                                        placeholder="TITLE"
+                                                    />
+                                                    <input
+                                                        className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
+                                                        value={res.url}
+                                                        onChange={(e) => {
+                                                            const newRes = [...config.resources];
+                                                            newRes[idx] = { ...newRes[idx], url: e.target.value };
+                                                            setConfig({ ...config, resources: newRes });
+                                                        }}
+                                                        placeholder="SOURCE_URL"
+                                                    />
+                                                    {res.type === 'post' && (
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <input
+                                                                className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
+                                                                value={res.previewUrl || ''}
+                                                                onChange={(e) => {
+                                                                    const newRes = [...config.resources];
+                                                                    newRes[idx] = { ...newRes[idx], previewUrl: e.target.value };
+                                                                    setConfig({ ...config, resources: newRes });
+                                                                }}
+                                                                placeholder="PREVIEW_IMG"
+                                                            />
+                                                            <input
+                                                                className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
+                                                                value={res.meta || ''}
+                                                                onChange={(e) => {
+                                                                    const newRes = [...config.resources];
+                                                                    newRes[idx] = { ...newRes[idx], meta: e.target.value };
+                                                                    setConfig({ ...config, resources: newRes });
+                                                                }}
+                                                                placeholder="META_TAG"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Gallery Settings (New) */}
+                                <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 font-mono">
+                                            <Camera size={16} className="text-zinc-500" /> Gallery
+                                        </h2>
+                                        <div className="flex gap-2">
+                                            <label className="text-[10px] font-mono px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-all font-bold border border-white/10 uppercase tracking-tighter cursor-pointer flex items-center gap-2">
+                                                <Upload size={10} /> ADD_IMG
+                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'gallery', 'image')} />
+                                            </label>
+                                            <label className="text-[10px] font-mono px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-all font-bold border border-white/10 uppercase tracking-tighter cursor-pointer flex items-center gap-2">
+                                                <Upload size={10} /> ADD_VID
+                                                <input type="file" className="hidden" accept="video/*" onChange={(e) => handleFileUpload(e, 'gallery', 'video')} />
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {(config.gallery || []).map((item, idx) => (
+                                            <div key={item.id} className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3 group hover:border-white/20 transition-all">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <button
+                                                                disabled={idx === 0}
+                                                                onClick={() => {
+                                                                    const newGal = [...(config.gallery || [])];
+                                                                    [newGal[idx], newGal[idx - 1]] = [newGal[idx - 1], newGal[idx]];
+                                                                    setConfig({ ...config, gallery: newGal });
+                                                                }}
+                                                                className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
+                                                            >
+                                                                <ArrowUp size={10} />
+                                                            </button>
+                                                            <button
+                                                                disabled={idx === (config.gallery || []).length - 1}
+                                                                onClick={() => {
+                                                                    const newGal = [...(config.gallery || [])];
+                                                                    [newGal[idx], newGal[idx + 1]] = [newGal[idx + 1], newGal[idx]];
+                                                                    setConfig({ ...config, gallery: newGal });
+                                                                }}
+                                                                className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
+                                                            >
+                                                                <ArrowDown size={10} />
+                                                            </button>
+                                                        </div>
+                                                        <span className="text-[10px] font-bold uppercase text-zinc-500">{item.type}</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setConfig({ ...config, gallery: config.gallery?.filter(i => i.id !== item.id) })}
+                                                        className="text-white/20 hover:text-red-500 transition-all opacity-40 group-hover:opacity-100 p-1"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                                {item.type === 'image' ? (
+                                                    <img src={item.url} className="w-full h-24 object-cover rounded-lg border border-white/5" />
+                                                ) : (
+                                                    <video src={item.url} className="w-full h-24 object-cover rounded-lg border border-white/5" controls />
                                                 )}
                                                 <input
-                                                    className="bg-zinc-900/50 border border-white/5 rounded-lg px-3 py-1.5 text-[10px] font-mono text-zinc-400 focus:text-white outline-none flex-1 focus:border-white/20 transition-all"
-                                                    value={link.url}
+                                                    className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
+                                                    value={item.caption || ''}
                                                     onChange={(e) => {
-                                                        const newLinks = [...config.links];
-                                                        newLinks[idx] = { ...newLinks[idx], url: e.target.value };
-                                                        setConfig({ ...config, links: newLinks });
+                                                        const newGal = [...(config.gallery || [])];
+                                                        newGal[idx] = { ...newGal[idx], caption: e.target.value };
+                                                        setConfig({ ...config, gallery: newGal });
+                                                    }}
+                                                    placeholder="CAPTION / DESCRIPTION"
+                                                />
+                                                <input
+                                                    className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
+                                                    value={item.url}
+                                                    onChange={(e) => {
+                                                        const newGal = [...(config.gallery || [])];
+                                                        newGal[idx] = { ...newGal[idx], url: e.target.value };
+                                                        setConfig({ ...config, gallery: newGal });
                                                     }}
                                                     placeholder="URL"
                                                 />
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Resources Settings */}
-                            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 font-mono">
-                                        <Book size={16} className="text-zinc-500" /> Resources
-                                    </h2>
-                                    <button
-                                        onClick={() => {
-                                            const newResources = [...config.resources, { id: Date.now().toString(), title: 'New Resource', url: '/', type: 'doc' as const }];
-                                            setConfig({ ...config, resources: newResources });
-                                            setTimeout(() => {
-                                                const container = document.getElementById('resources-container');
-                                                if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-                                            }, 100);
-                                        }}
-                                        className="text-[10px] font-mono px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-all font-bold border border-white/10 uppercase tracking-tighter"
-                                    >
-                                        + ADD_CORE_RES
-                                    </button>
-                                </div>
-                                <div id="resources-container" className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {config.resources.map((res, idx) => (
-                                        <div key={res.id} className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3 group hover:border-white/20 transition-all">
-                                            <div className="flex justify-between items-center">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <button
-                                                            disabled={idx === 0}
-                                                            onClick={() => {
-                                                                const newRes = [...config.resources];
-                                                                [newRes[idx], newRes[idx - 1]] = [newRes[idx - 1], newRes[idx]];
-                                                                setConfig({ ...config, resources: newRes });
-                                                            }}
-                                                            className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
-                                                        >
-                                                            <ArrowUp size={10} />
-                                                        </button>
-                                                        <button
-                                                            disabled={idx === config.resources.length - 1}
-                                                            onClick={() => {
-                                                                const newRes = [...config.resources];
-                                                                [newRes[idx], newRes[idx + 1]] = [newRes[idx + 1], newRes[idx]];
-                                                                setConfig({ ...config, resources: newRes });
-                                                            }}
-                                                            className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
-                                                        >
-                                                            <ArrowDown size={10} />
-                                                        </button>
-                                                    </div>
-                                                    <select
-                                                        value={res.type}
-                                                        onChange={(e) => {
-                                                            const newRes = [...config.resources];
-                                                            newRes[idx] = { ...newRes[idx], type: e.target.value as any };
-                                                            setConfig({ ...config, resources: newRes });
-                                                        }}
-                                                        className="bg-zinc-800 text-[10px] px-2 py-1 rounded-md outline-none border border-white/5 font-mono uppercase text-zinc-400 hover:text-white transition-all cursor-pointer"
-                                                    >
-                                                        <option value="gallery">Gallery</option>
-                                                        <option value="doc">Doc</option>
-                                                        <option value="post">Post</option>
-                                                    </select>
-                                                </div>
-                                                <button
-                                                    onClick={() => setConfig({ ...config, resources: config.resources.filter(r => r.id !== res.id) })}
-                                                    className="text-white/20 hover:text-red-500 transition-all opacity-40 group-hover:opacity-100 p-1"
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <input
-                                                    className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
-                                                    value={res.title}
-                                                    onChange={(e) => {
-                                                        const newRes = [...config.resources];
-                                                        newRes[idx] = { ...newRes[idx], title: e.target.value };
-                                                        setConfig({ ...config, resources: newRes });
-                                                    }}
-                                                    placeholder="TITLE"
-                                                />
-                                                <input
-                                                    className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
-                                                    value={res.url}
-                                                    onChange={(e) => {
-                                                        const newRes = [...config.resources];
-                                                        newRes[idx] = { ...newRes[idx], url: e.target.value };
-                                                        setConfig({ ...config, resources: newRes });
-                                                    }}
-                                                    placeholder="SOURCE_URL"
-                                                />
-                                                {res.type === 'post' && (
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <input
-                                                            className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
-                                                            value={res.previewUrl || ''}
-                                                            onChange={(e) => {
-                                                                const newRes = [...config.resources];
-                                                                newRes[idx] = { ...newRes[idx], previewUrl: e.target.value };
-                                                                setConfig({ ...config, resources: newRes });
-                                                            }}
-                                                            placeholder="PREVIEW_IMG"
-                                                        />
-                                                        <input
-                                                            className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
-                                                            value={res.meta || ''}
-                                                            onChange={(e) => {
-                                                                const newRes = [...config.resources];
-                                                                newRes[idx] = { ...newRes[idx], meta: e.target.value };
-                                                                setConfig({ ...config, resources: newRes });
-                                                            }}
-                                                            placeholder="META_TAG"
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Gallery Settings (New) */}
-                            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 font-mono">
-                                        <Camera size={16} className="text-zinc-500" /> Gallery
-                                    </h2>
-                                    <div className="flex gap-2">
-                                        <label className="text-[10px] font-mono px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-all font-bold border border-white/10 uppercase tracking-tighter cursor-pointer flex items-center gap-2">
-                                            <Upload size={10} /> ADD_IMG
-                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'gallery', 'image')} />
-                                        </label>
-                                        <label className="text-[10px] font-mono px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-all font-bold border border-white/10 uppercase tracking-tighter cursor-pointer flex items-center gap-2">
-                                            <Upload size={10} /> ADD_VID
-                                            <input type="file" className="hidden" accept="video/*" onChange={(e) => handleFileUpload(e, 'gallery', 'video')} />
-                                        </label>
+                                        ))}
                                     </div>
-                                </div>
-                                <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {(config.gallery || []).map((item, idx) => (
-                                        <div key={item.id} className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3 group hover:border-white/20 transition-all">
-                                            <div className="flex justify-between items-center">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <button
-                                                            disabled={idx === 0}
-                                                            onClick={() => {
-                                                                const newGal = [...(config.gallery || [])];
-                                                                [newGal[idx], newGal[idx - 1]] = [newGal[idx - 1], newGal[idx]];
-                                                                setConfig({ ...config, gallery: newGal });
-                                                            }}
-                                                            className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
-                                                        >
-                                                            <ArrowUp size={10} />
-                                                        </button>
-                                                        <button
-                                                            disabled={idx === (config.gallery || []).length - 1}
-                                                            onClick={() => {
-                                                                const newGal = [...(config.gallery || [])];
-                                                                [newGal[idx], newGal[idx + 1]] = [newGal[idx + 1], newGal[idx]];
-                                                                setConfig({ ...config, gallery: newGal });
-                                                            }}
-                                                            className="p-0.5 hover:bg-white/10 rounded text-zinc-600 disabled:opacity-0"
-                                                        >
-                                                            <ArrowDown size={10} />
-                                                        </button>
-                                                    </div>
-                                                    <span className="text-[10px] font-bold uppercase text-zinc-500">{item.type}</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => setConfig({ ...config, gallery: config.gallery?.filter(i => i.id !== item.id) })}
-                                                    className="text-white/20 hover:text-red-500 transition-all opacity-40 group-hover:opacity-100 p-1"
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            </div>
-                                            {item.type === 'image' ? (
-                                                <img src={item.url} className="w-full h-24 object-cover rounded-lg border border-white/5" />
-                                            ) : (
-                                                <video src={item.url} className="w-full h-24 object-cover rounded-lg border border-white/5" controls />
-                                            )}
-                                            <input
-                                                className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
-                                                value={item.caption || ''}
-                                                onChange={(e) => {
-                                                    const newGal = [...(config.gallery || [])];
-                                                    newGal[idx] = { ...newGal[idx], caption: e.target.value };
-                                                    setConfig({ ...config, gallery: newGal });
-                                                }}
-                                                placeholder="CAPTION / DESCRIPTION"
-                                            />
-                                            <input
-                                                className="admin-input py-1.5 text-[10px] bg-zinc-900/50"
-                                                value={item.url}
-                                                onChange={(e) => {
-                                                    const newGal = [...(config.gallery || [])];
-                                                    newGal[idx] = { ...newGal[idx], url: e.target.value };
-                                                    setConfig({ ...config, gallery: newGal });
-                                                }}
-                                                placeholder="URL"
-                                            />
-                                        </div>
-                                    ))}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <style jsx global>{`
+                    <style jsx global>{`
            .admin-input {
              width: 100%;
              padding: 0.75rem 1rem;

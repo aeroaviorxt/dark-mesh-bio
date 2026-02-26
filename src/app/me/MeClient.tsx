@@ -445,18 +445,6 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                         </div>
                     )}
 
-                    {/* Daily Quote Widget */}
-                    {config.widgets?.quotesEnabled && dailyQuote && (
-                        <div className="mt-8 px-6 py-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] backdrop-blur-xl relative overflow-hidden group animate-fade-in">
-                            <Quote size={24} className="absolute -top-2 -left-2 text-white/5 rotate-12" />
-                            <p className="text-[11px] font-medium leading-relaxed text-zinc-300 italic">
-                                "{dailyQuote.text}"
-                            </p>
-                            <p className="mt-2 text-[9px] font-mono uppercase tracking-widest text-zinc-500">
-                                — {dailyQuote.author}
-                            </p>
-                        </div>
-                    )}
 
                     {/* Weather & Location Widget */}
                     {weather && (
@@ -516,8 +504,23 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                     </div>
                 </div>
 
+                {/* Daily Quote Widget */}
+                {config.widgets?.quotesEnabled && dailyQuote && (
+                    <div className="w-full mb-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                        <div className="px-6 py-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] backdrop-blur-xl relative overflow-hidden group">
+                            <Quote size={24} className="absolute -top-2 -left-2 text-white/5 rotate-12" />
+                            <p className="text-[11px] font-medium leading-relaxed text-zinc-300 italic">
+                                "{dailyQuote.text}"
+                            </p>
+                            <p className="mt-2 text-[9px] font-mono uppercase tracking-widest text-zinc-500">
+                                — {dailyQuote.author}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Music Player */}
-                <div className="w-full mb-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                <div className="w-full mb-8 animate-fade-in" style={{ animationDelay: '0.5s' }}>
                     <div className="flex items-center justify-between mb-3 ml-1">
                         <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.2em] block">
                             {config.music.spotifyEnabled && spotifyData?.isPlaying ? '// Currently_Playing' : '// Current_Freq'}
