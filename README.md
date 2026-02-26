@@ -217,4 +217,11 @@ This project leverages several external APIs to provide real-time, dynamic featu
 ---
 
 ## �📝 License
-MIT License. Created by [avrxtcloud](https://github.com/avrxtcloud).
+## 📄 License
+
+This project is dual-licensed under the **MIT License** and the **Apache License 2.0**. You may choose the license that best suits your needs.
+
+- [MIT License](LICENSE-MIT)
+- [Apache License 2.0](LICENSE-APACHE)
+
+Created with ❤️ by [avrxtcloud](https://github.com/avrxtcloud).
