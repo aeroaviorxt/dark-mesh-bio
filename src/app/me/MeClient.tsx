@@ -112,25 +112,27 @@ export default function MeClient({ initialConfig }: MeClientProps) {
         let heartbeatInterval: any = null;
 
         const connect = () => {
-            socket = new WebSocket('wss://api.lanyard.rest/socket');
+            const ws = new WebSocket('wss://api.lanyard.rest/socket');
+            socket = ws;
 
-            socket.onopen = () => {
+            ws.onopen = () => {
                 console.log('Lanyard Uplink: CONNECTED');
             };
 
-            socket.onmessage = (event) => {
+            ws.onmessage = (event) => {
                 const message = JSON.parse(event.data);
+                console.log(`Lanyard Op:${message.op} Type:${message.t}`, message.d);
 
                 // Initial Hello (Receive Heartbeat Interval)
                 if (message.op === 1) {
                     heartbeatInterval = setInterval(() => {
-                        if (socket && socket.readyState === WebSocket.OPEN) {
-                            socket.send(JSON.stringify({ op: 3 }));
+                        if (ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ op: 3 }));
                         }
                     }, message.d.heartbeat_interval);
 
                     // Subscribe to individual user
-                    socket?.send(JSON.stringify({
+                    ws.send(JSON.stringify({
                         op: 2,
                         d: { subscribe_to_id: discordId }
                     }));
@@ -139,13 +141,12 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                 // Initial State or Update
                 if (message.op === 0) {
                     if (message.t === 'INIT_STATE' || message.t === 'PRESENCE_UPDATE') {
-                        console.log('Lanyard Data:', message.d);
                         setPresenceData(message.d);
                     }
                 }
             };
 
-            socket.onclose = () => {
+            ws.onclose = () => {
                 console.log('Lanyard Uplink: DISCONNECTED');
                 if (heartbeatInterval) clearInterval(heartbeatInterval);
                 // Attempt to reconnect after 5s if still in auto mode
@@ -154,9 +155,9 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                 }, 5000);
             };
 
-            socket.onerror = (err) => {
+            ws.onerror = (err) => {
                 console.error('Lanyard Socket Error:', err);
-                socket?.close();
+                ws.close();
             };
         };
 
