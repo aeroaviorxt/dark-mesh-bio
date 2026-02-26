@@ -2,7 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Instagram, Github, Mail, Play, Pause, Camera, BookOpen, ExternalLink, ArrowRight, ChevronRight, Share2 } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import {
+    Instagram, Github, Mail, Play, Pause, Camera, BookOpen,
+    ExternalLink, ArrowRight, ChevronRight, Share2, Activity
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MeConfig } from '@/lib/me-config';
 
@@ -15,9 +19,7 @@ interface MeClientProps {
 }
 
 export default function MeClient({ initialConfig }: MeClientProps) {
-    // We can just use initialConfig if we don't expect real-time updates without refresh
-    // Or satisfy TypeScript:
-    const config = initialConfig;
+    const [config, setConfig] = useState<MeConfig>(initialConfig);
 
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -96,6 +98,58 @@ export default function MeClient({ initialConfig }: MeClientProps) {
         return () => clearInterval(interval);
     }, [config.music.spotifyEnabled]);
 
+    const [presenceData, setPresenceData] = useState<any>(null);
+
+    // Lanyard Presence Polling
+    useEffect(() => {
+        if (config.profile.presence?.mode !== 'auto' || !config.profile.presence?.discordId) return;
+
+        const fetchPresence = async () => {
+            const discordId = config.profile.presence?.discordId;
+            if (!discordId) return;
+            try {
+                const res = await fetch(`https://api.lanyard.rest/v1/users/${discordId}`);
+                const data = await res.json();
+                if (data.success) {
+                    setPresenceData(data.data);
+                }
+            } catch (error) {
+                console.error('Lanyard fetch error:', error);
+            }
+        };
+
+        fetchPresence();
+        const interval = setInterval(fetchPresence, 10000); // Poll every 10 seconds
+        return () => clearInterval(interval);
+    }, [config.profile.presence?.mode, config.profile.presence?.discordId]);
+
+    // Supabase Realtime Subscription
+    useEffect(() => {
+        const supabase = createClient();
+        const channel = supabase
+            .channel('me_config_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'me_config',
+                    filter: 'key=eq.main_config'
+                },
+                (payload) => {
+                    console.log('Me Config Synchronized:', payload.new);
+                    if (payload.new && (payload.new as any).data) {
+                        setConfig((payload.new as any).data as MeConfig);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
+
     const formatTimeAgo = (date: string) => {
         if (!date) return '';
         const now = new Date();
@@ -113,6 +167,25 @@ export default function MeClient({ initialConfig }: MeClientProps) {
         if (diffInMonths < 12) return `${diffInMonths}mo ago`;
         return `${Math.floor(diffInMonths / 12)}y ago`;
     };
+
+    const getStatusInfo = () => {
+        if (config.profile.presence?.mode === 'auto' && presenceData) {
+            const status = presenceData.discord_status;
+            switch (status) {
+                case 'online': return { text: 'Online', color: 'green' as const };
+                case 'idle': return { text: 'Idle', color: 'yellow' as const };
+                case 'dnd': return { text: 'DND', color: 'red' as const };
+                case 'offline': return { text: 'Offline', color: 'gray' as const };
+                default: return { text: 'Offline', color: 'gray' as const };
+            }
+        }
+        return {
+            text: config.profile.status?.text || 'Offline',
+            color: (config.profile.status?.color || 'gray') as any
+        };
+    };
+
+    const statusInfo = getStatusInfo();
 
     // Live progress for Spotify
     useEffect(() => {
@@ -187,24 +260,36 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                     <p className="text-sm font-light tracking-[0.2em] text-zinc-400 mt-3 uppercase italic">{config.profile.bio}</p>
 
                     {/* Status Indicator */}
-                    {config.profile.status && config.profile.status.text && (
+                    {statusInfo.text && (
                         <div className={cn(
-                            "mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border bg-black/50 backdrop-blur-md",
-                            config.profile.status.color === 'green' && "border-emerald-500/30 text-emerald-400",
-                            config.profile.status.color === 'yellow' && "border-yellow-500/30 text-yellow-400",
-                            config.profile.status.color === 'red' && "border-red-500/30 text-red-400",
-                            config.profile.status.color === 'blue' && "border-blue-500/30 text-blue-400",
-                            config.profile.status.color === 'purple' && "border-purple-500/30 text-purple-400",
+                            "mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border bg-black/50 backdrop-blur-md transition-all duration-500",
+                            statusInfo.color === 'green' && "border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]",
+                            statusInfo.color === 'yellow' && "border-yellow-500/30 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.1)]",
+                            statusInfo.color === 'red' && "border-red-500/30 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.1)]",
+                            statusInfo.color === 'blue' && "border-blue-500/30 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.1)]",
+                            statusInfo.color === 'purple' && "border-purple-500/30 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]",
+                            statusInfo.color === 'gray' && "border-zinc-500/30 text-zinc-400 shadow-[0_0_15px_rgba(113,113,122,0.1)]",
                         )}>
                             <span className={cn(
-                                "w-1.5 h-1.5 rounded-full animate-pulse",
-                                config.profile.status.color === 'green' && "bg-emerald-500",
-                                config.profile.status.color === 'yellow' && "bg-yellow-500",
-                                config.profile.status.color === 'red' && "bg-red-500",
-                                config.profile.status.color === 'blue' && "bg-blue-500",
-                                config.profile.status.color === 'purple' && "bg-purple-500",
-                            )}></span>
-                            <span className="text-[10px] font-mono uppercase tracking-widest">{config.profile.status.text}</span>
+                                "w-1.5 h-1.5 rounded-full relative transition-all duration-500",
+                                statusInfo.color === 'green' && "bg-emerald-500",
+                                statusInfo.color === 'yellow' && "bg-yellow-500",
+                                statusInfo.color === 'red' && "bg-red-500",
+                                statusInfo.color === 'blue' && "bg-blue-500",
+                                statusInfo.color === 'purple' && "bg-purple-500",
+                                statusInfo.color === 'gray' && "bg-zinc-500",
+                            )}>
+                                <span className={cn(
+                                    "absolute inset-0 rounded-full animate-ping opacity-75",
+                                    statusInfo.color === 'green' && "bg-emerald-400",
+                                    statusInfo.color === 'yellow' && "bg-yellow-400",
+                                    statusInfo.color === 'red' && "bg-red-400",
+                                    statusInfo.color === 'blue' && "bg-blue-400",
+                                    statusInfo.color === 'purple' && "bg-purple-400",
+                                    statusInfo.color === 'gray' && "bg-zinc-400",
+                                )}></span>
+                            </span>
+                            <span className="text-[10px] font-mono uppercase tracking-widest">{statusInfo.text}</span>
                         </div>
                     )}
                 </div>

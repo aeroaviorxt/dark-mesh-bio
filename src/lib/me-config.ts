@@ -18,6 +18,10 @@ export interface MeConfig {
             text: string; // "Busy", "Free", "Coding"
             color: 'green' | 'yellow' | 'red' | 'blue' | 'purple';
         };
+        presence?: {
+            mode: 'manual' | 'auto';
+            discordId?: string;
+        };
     };
     music: {
         title: string;
@@ -51,7 +55,8 @@ export const defaultMeConfig: MeConfig = {
         logoUrl: "https://cdn.avrxt.in/assets/logo-02.png",
         bannerUrl: "https://objects.avrxt.in/images/aviorxt_01.jpg",
         themeColor: "#10b981",
-        status: { text: 'Online', color: 'green' }
+        status: { text: 'Online', color: 'green' },
+        presence: { mode: 'manual', discordId: '1269352892146384957' }
     },
     music: {
         title: "her",
