@@ -23,6 +23,7 @@ export interface MeConfig {
             discordId?: string;
         };
         location?: string;
+        weatherEnabled?: boolean;
     };
     music: {
         title: string;

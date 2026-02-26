@@ -239,13 +239,59 @@ export default function MeAdminClient({ initialConfig, isSpotifyConnected }: MeA
                                         className="admin-input"
                                         placeholder="Gallery Banner URL"
                                     />
-                                    <input
-                                        type="text"
-                                        value={config.profile.location || ''}
-                                        onChange={(e) => setConfig({ ...config, profile: { ...config.profile, location: e.target.value } })}
-                                        className="admin-input"
-                                        placeholder="Location (e.g. Chennai, IN)"
-                                    />
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between px-1">
+                                            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Weather_Widget</span>
+                                            <button
+                                                onClick={() => setConfig({
+                                                    ...config,
+                                                    profile: { ...config.profile, weatherEnabled: !config.profile.weatherEnabled }
+                                                })}
+                                                className={cn(
+                                                    "px-3 py-1 rounded-md text-[9px] font-bold font-mono transition-all uppercase",
+                                                    config.profile.weatherEnabled ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-zinc-800 text-zinc-500 border border-white/5"
+                                                )}
+                                            >
+                                                {config.profile.weatherEnabled ? 'ENABLED' : 'DISABLED'}
+                                            </button>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={config.profile.location || ''}
+                                                onChange={(e) => setConfig({ ...config, profile: { ...config.profile, location: e.target.value } })}
+                                                className="admin-input flex-1"
+                                                placeholder="City Name (e.g. Chennai)"
+                                            />
+                                            <button
+                                                onClick={async () => {
+                                                    const query = config.profile.location?.trim();
+                                                    if (!query) return;
+                                                    setSaveStatus('SEARCHING_GEO...');
+                                                    try {
+                                                        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=en&format=json`);
+                                                        const data = await res.json();
+                                                        if (data.results) {
+                                                            // We'll use a simple alert/prompt for now or just take the first one
+                                                            const first = data.results[0];
+                                                            setConfig({
+                                                                ...config,
+                                                                profile: { ...config.profile, location: `${first.name}, ${first.country}` }
+                                                            });
+                                                            setSaveStatus(`FOUND: ${first.name}`);
+                                                        } else {
+                                                            setSaveStatus('ERROR: NOT_FOUND');
+                                                        }
+                                                    } catch (e) {
+                                                        setSaveStatus('ERROR: GEO_FAIL');
+                                                    }
+                                                }}
+                                                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-[10px] font-bold font-mono border border-white/5 transition-all"
+                                            >
+                                                FIND
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div className="flex items-center gap-2">
                                         <label className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg cursor-pointer transition-all border border-white/5">
                                             <Upload size={12} className="text-zinc-400" />

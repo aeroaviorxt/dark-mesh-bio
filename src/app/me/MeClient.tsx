@@ -81,16 +81,23 @@ export default function MeClient({ initialConfig }: MeClientProps) {
 
     // Weather Fetching (Open-Meteo)
     useEffect(() => {
-        if (!config.profile.location) return;
+        if (!config.profile.weatherEnabled || !config.profile.location) {
+            setWeather(null);
+            return;
+        }
 
         const fetchWeather = async () => {
             try {
-                // 1. Geocoding
-                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(config.profile.location ?? '')}&count=1&language=en&format=json`);
+                // 1. Geocoding - use only city name if comma provided to increase hit rate
+                const cityName = config.profile.location?.split(',')[0].trim() || '';
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=en&format=json`);
                 const geoData = await geoRes.json();
 
-                if (!geoData.results?.[0]) return;
-                const { latitude, longitude, name } = geoData.results[0];
+                if (!geoData.results?.[0]) {
+                    console.warn('Geocoding failed for:', cityName);
+                    return;
+                }
+                const { latitude, longitude, name, country } = geoData.results[0];
 
                 // 2. Weather
                 const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=relativehumidity_2m,apparent_temperature`);
@@ -100,7 +107,7 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                     setWeather({
                         temp: Math.round(weatherData.current_weather.temperature),
                         condition: weatherData.current_weather.weathercode,
-                        location: name,
+                        location: `${name}, ${country || ''}`,
                         humidity: weatherData.hourly.relativehumidity_2m[0],
                         feelsLike: Math.round(weatherData.hourly.apparent_temperature[0])
                     });
@@ -113,7 +120,7 @@ export default function MeClient({ initialConfig }: MeClientProps) {
         fetchWeather();
         const interval = setInterval(fetchWeather, 1800000); // 30 mins
         return () => clearInterval(interval);
-    }, [config.profile.location]);
+    }, [config.profile.location, config.profile.weatherEnabled]);
 
     const [spotifyData, setSpotifyData] = useState<any>(null);
     const [isSpotifyLive, setIsSpotifyLive] = useState(config.music.spotifyEnabled);
