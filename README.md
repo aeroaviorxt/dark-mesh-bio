@@ -170,5 +170,43 @@ VALUES ('main_config', '{
 
 ---
 
-## 📝 License
+## �️ API Documentation & Integration Details
+
+This project leverages several external APIs to provide real-time, dynamic features. Here is a breakdown of how they are used, where to get credentials, and their usage limits.
+
+### 1. 📹 YouTube Data API v3
+*   **Use Case**: Powers the music discovery feature in the Admin Dashboard. It allows you to search for high-quality audio tracks to set as your profile's background music.
+*   **What it does**: Fetches video metadata, titles, and high-res thumbnails based on your search queries.
+*   **Where to get**: [Google Cloud Console](https://console.cloud.google.com/).
+*   **Limits**: 10,000 units per day (Free Tier). Each search uses approximately 100 units.
+*   **Environment Variable**: `YOUTUBE_API_KEY`
+
+### 2. 🎧 Spotify Web API
+*   **Use Case**: Real-time "Currently Playing" widget and 3D Music Cards.
+*   **What it does**: Synchronizes your live listening activity, fetches track progress, album art, and audio features.
+*   **Where to get**: [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+*   **Limits**: Rate limits apply based on volume, but generally sufficient for personal use.
+*   **Environment Variables**: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`
+
+### 3. 📡 Lanyard API (WebSockets)
+*   **Use Case**: Live Discord Presence system (Status, Activities, Custom Status).
+*   **What it does**: Connects to the Lanyard WebSocket to push real-time updates from your Discord profile to your personal page without refreshing.
+*   **Where to get**: Join the [Lanyard Discord](https://discord.gg/lanyard).
+*   **Prerequisite**: You must be in the Lanyard server and have "Display current activity as a status message" enabled in Discord.
+*   **Limits**: None (Public community API).
+
+### 4. 🌦️ Open-Meteo API (Weather)
+*   **Use Case**: Dynamic weather widget in the profile header.
+*   **What it does**: Fetches real-time temperature and weather conditions based on the location configured in your Admin Panel.
+*   **Limits**: Free for non-commercial use (up to 10,000 requests per day). No API Key required.
+
+### 5. 🧊 Supabase (Backend-as-a-Service)
+*   **Use Case**: Database, Authentication, and Image Hosting.
+*   **What it does**: Stores your profile configuration, handles administrator login, and serves uploaded assets (avatars, backgrounds).
+*   **Where to get**: [Supabase.com](https://supabase.com/).
+*   **Limits**: Free tier includes 500MB database and 1GB storage.
+
+---
+
+## �📝 License
 MIT License. Created by [avrxtcloud](https://github.com/avrxtcloud).
