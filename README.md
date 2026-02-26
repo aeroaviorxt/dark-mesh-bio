@@ -1,227 +1,95 @@
-# 🎴 avrxt-me: Premium Link-in-Bio Engine
+<div align="center">
 
-A state-of-the-art, high-performance Link-in-Bio system built with **Next.js 15+**, **Supabase**, and **Tailwind CSS**. Designed for creators who want a premium, self-hosted digital profile with real-time integrations.
+![dark_mesh_bio_banner](file:///C:/Users/Administrator/.gemini/antigravity/brain/a63efce1-41f8-412a-98d7-0989e7767659/repo_banner_premium_1772136309082.png)
 
----
+# 🎴 Dark Mesh Bio
+### The Ultimate Premium Link-in-Bio Engine
 
-## � Live Demo & Socials
-- **Live Demo**: [https://avrxt.in/me](https://avrxt.in/me)
-- **Instagram**: [@avr.ms](https://instagram.com/avr.ms)
-- **GitHub**: [aviorxt](https://github.com/aviorxt)
-- **Official Website**: [avrxt.in](https://avrxt.in)
+[![MIT License](https://img.shields.io/badge/License-MIT-emerald.svg?style=for-the-badge&logoScale=0.5)](LICENSE-MIT)
+[![Next.js](https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
----
+[**Explore Live Demo**](https://avrxt.in/me)  •  [**Documentation**](#-setup-guide)  •  [**Community**](COLLABORATION.md)
 
-## �🚀 Quick Start Instructions
-
-1.  **Fork & Clone**:
-    ```bash
-    git clone https://github.com/aeroaviorxt/dark-mesh-bio.git
-    cd dark-mesh-bio
-    npm install
-    ```
-2.  **Environment Setup**:
-    Copy `.env.local.example` or create `.env.local` using the template below.
-3.  **Run Locally**:
-    ```bash
-    npm run dev
-    ```
+</div>
 
 ---
 
-## 🔐 Environment Variables
+## 🌑 The Aesthetic
+**Dark Mesh Bio** isn't just a link tree; it's a statement. Designed with a core philosophy of **"Digital Obsidian"**, it combines high-performance engineering with a sleek, glassmorphic UI that feels premium from the first pixel.
 
-| Variable | Requirement | Description |
+- **Obsidian Dark Mesh**: A custom-engineered CSS design system.
+- **Micro-Interactions**: Silky smooth transitions and hover effects.
+- **3D Logic**: Preserved depth with custom preservation-3d cards.
+- **Adaptive Precision**: Perfect rendering across all device architectures.
+
+---
+
+## 🔗 Live Connections
+- **Official Identity**: [avrxt.in](https://avrxt.in)
+- **Instagram Protocol**: [@avr.ms](https://instagram.com/avr.ms)
+- **Engineering Core**: [aviorxt](https://github.com/aviorxt)
+
+---
+
+## ✨ Core Modules
+
+- **Dynamic Identity**: Infinite scalability for links, social footprints, and resources.
+- **Real-Time Presence**: Integrated with **Lanyard API** for live Discord status updates.
+- **Haptic Music Layer**: Live **Spotify** tracking with 3D album art and progress synchronization.
+- **Admin Command Center**: A secure, high-end dashboard to orchestrate your entire digital presence.
+- **Security Protocols**: Environment-driven **Discord Role-Based Authentication** for enterprise-grade control.
+
+---
+
+## 🔐 Configuration Matrix
+
+| Variable | Protocol | Status |
 | :--- | :--- | :--- |
-| `NEXT_PUBLIC_SUPABASE_URL` | **Required** | Your Supabase Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Required** | Your Supabase Anon Key |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Required** | Your Supabase Service Role Key (for secure actions) |
-| `SPOTIFY_CLIENT_ID` | Optional | Client ID from Spotify Dev Dashboard |
-| `SPOTIFY_CLIENT_SECRET` | Optional | Client Secret from Spotify Dev Dashboard |
-| `SPOTIFY_REDIRECT_URI` | Optional | Redirect URI for Spotify (must match dashboard) |
-| `YOUTUBE_API_KEY` | Optional | Google Cloud API Key for YouTube Search |
-| `DISCORD_GUILD_ID` | Optional | Server ID for role-based authentication |
-| `DISCORD_ROLE_ID` | Optional | Role ID for role-based authentication |
+| `NEXT_PUBLIC_SUPABASE_URL` | Cloud Endpoint | **Primary** |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public Access | **Primary** |
+| `SUPABASE_SERVICE_ROLE_KEY` | Administrative | **Critical** |
+| `SPOTIFY_CLIENT_ID` | Music Integration | *Optional* |
+| `SPOTIFY_CLIENT_SECRET` | Music Integration | *Optional* |
+| `DISCORD_GUILD_ID` | Security Protocol | *Optional* |
+| `DISCORD_ROLE_ID` | Security Protocol | *Optional* |
 
 ---
 
-## 🏗️ Supabase Setup Instructions
+## 🛠️ Setup Guide
 
-1.  **Create Project**: Sign up at [Supabase](https://supabase.com) and create a new project.
-2.  **SQL Execution**: Open the **SQL Editor** in your Supabase dashboard and paste the following script to initialize your database:
+### 1. 🏗️ Database Setup
+1. Create a project at [Supabase](https://supabase.com).
+2. Run the `setup.sql` script in the **SQL Editor**.
+3. Create a public bucket named `images` in **Storage**.
 
-```sql
--- avrxt-me Supabase Schema Setup
+### 2. 🔑 Environment Configuration
+Copy `.env.local.example` and fill in your Supabase, Spotify, and YouTube credentials.
 
--- 1. me_config table (Core Configuration)
-CREATE TABLE IF NOT EXISTS public.me_config (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    key TEXT UNIQUE NOT NULL,
-    data JSONB NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE public.me_config ENABLE ROW LEVEL SECURITY;
-
--- 2. spotify_tokens table
-CREATE TABLE IF NOT EXISTS public.spotify_tokens (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    access_token TEXT NOT NULL,
-    refresh_token TEXT NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE public.spotify_tokens ENABLE ROW LEVEL SECURITY;
-
--- 3. spotify_history table
-CREATE TABLE IF NOT EXISTS public.spotify_history (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    song_name TEXT NOT NULL,
-    artist TEXT NOT NULL,
-    cover_url TEXT,
-    played_at TIMESTAMPTZ DEFAULT now(),
-    UNIQUE(song_name, artist)
-);
-
-ALTER TABLE public.spotify_history ENABLE ROW LEVEL SECURITY;
-
--- RLS POLICIES
-CREATE POLICY "Public can read config" ON public.me_config FOR SELECT USING (true);
-CREATE POLICY "Auth users can modify config" ON public.me_config FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth users can see tokens" ON public.spotify_tokens FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "Public can see history" ON public.spotify_history FOR SELECT USING (true);
-CREATE POLICY "Auth users can update history" ON public.spotify_history FOR ALL USING (auth.role() = 'authenticated');
-
--- Initial Seed
-INSERT INTO public.me_config (key, data)
-VALUES ('main_config', '{
-    "profile": {
-        "handle": "YourName",
-        "bio": "Open Source Link-in-Bio Engine",
-        "avatarUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop",
-        "bannerUrl": "",
-        "location": "Global",
-        "weatherEnabled": false,
-        "presence": { "mode": "manual", "discordId": "" },
-        "status": { "text": "Live", "color": "green" }
-    },
-    "links": [],
-    "music": { "title": "Welcome", "artist": "Setup your music", "coverUrl": "", "audioUrl": "", "spotifyEnabled": false },
-    "gallery": [],
-    "resources": [],
-    "widgets": { "quotesEnabled": true, "notesEnabled": false },
-    "auth": { "discordRoleEnabled": false, "discordServerId": "", "discordRoleId": "" }
-}') ON CONFLICT (key) DO NOTHING;
-```
-
-3.  **Storage Buckets**:
-    - Go to **Storage**.
-    - Create a new bucket named `images`.
-    - Set the bucket to **Public**.
-4.  **Auth Configuration**:
-    - Go to **Authentication -> Providers**.
-    - **GitHub**: Enable it and add your Client ID and Secret (from GitHub Developer Settings).
-    - **Discord**: Enable it and add your Client ID and Secret (from Discord Developer Portal).
-    - **Redirect URI**: Set your Supabase Redirect URI (found in Supabase Auth settings) in your GitHub/Discord app settings. It usually looks like:
-      `https://your-project-id.supabase.co/auth/v1/callback`
+### 3. 🚀 Deployment
+Deploy to **Vercel** and set your environment variables. Ensure your Redirect URIs match your deployment domain.
 
 ---
 
-## 🎧 Spotify Setup Instructions
+## 🛡️ API Documentation
+Detailed breakdown of our high-performance integrations:
 
-1.  Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
-2.  **Create an App**.
-3.  **Client ID & Secret**: Copy these into your `.env.local`.
-4.  **Redirect URIs**: Add the following:
-    - `http://localhost:3000/api/spotify/callback` (Local)
-    - `https://your-domain.com/api/spotify/callback` (Production)
-5.  **Usage**: In your admin panel, click "Connect Spotify" to authorize.
+*   **YouTube Data v3**: Orchestrates music discovery within the Admin Panel.
+*   **Spotify Web API**: Drives the live music synchronization engine.
+*   **Lanyard WS**: Manages the persistent WebSocket connection for real-time status.
+*   **Open-Meteo**: Provides automated, location-aware weather telemetry.
 
 ---
 
-## 🤖 Discord OAuth & Role Auth
+## 📜 Legal & Community
+This project is open-source and dual-licensed for maximum freedom.
 
-1.  Go to the [Discord Developer Portal](https://discord.com/developers/applications).
-2.  **Client ID & Secret**: Copy these to your Supabase Auth settings.
-3.  **Redirect URIs**:
-    - Add `https://your-project-id.supabase.co/auth/v1/callback` to your Discord App OAuth2 settings.
-4.  **Presence System (Lanyard)**:
-    - **IMPORTANT**: To use the real-time presence system, you **MUST** join the [Lanyard Discord Server](https://discord.gg/lanyard).
-    - The system uses the [Lanyard API](https://github.com/Phineas/lanyard) to fetch your status, activities, and Spotify data via WebSockets.
-5.  **Discord Bot (Optional for Role-Based Auth)**:
-    - Create a Bot in your application.
-    - Copy the **Bot Token** to your `.env.local` as `DISCORD_BOT_TOKEN`.
-    - Invite the bot to your server with `Guild Members` intent.
-    - Use the **Security Protocols** section in the Admin Panel to restrict access to a specific Server ID and Role ID.
+- **License**: [MIT](LICENSE-MIT) & [Apache 2.0](LICENSE-APACHE)
+- **Contributing**: Check our [Contributing Guide](CONTRIBUTING.md)
+- **Security**: View our [Security Policy](SECURITY.md)
 
----
-
-## � YouTube Data API Setup
-
-1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2.  **Create a Project**.
-3.  **Enable API**: Search for "YouTube Data API v3" and enable it.
-4.  **Credentials**: Create an **API Key**.
-5.  Copy the Key to your `.env.local` as `YOUTUBE_API_KEY`. This allows you to search for music tracks in the admin panel.
-
----
-
-## � Redirect URL Examples
-
-| Service | Environment | Redirect URL |
-| :--- | :--- | :--- |
-| **Supabase Auth** (GitHub/Discord) | Project Settings | `https://your-project.supabase.co/auth/v1/callback` |
-| **Spotify** | App Dashboard | `http://localhost:3000/api/spotify/callback` |
-| **Spotify** | Production | `https://your-domain.com/api/spotify/callback` |
-| **Supabase Site URL** | Auth Settings | `https://your-domain.com` |
-
----
-
-## �️ API Documentation & Integration Details
-
-This project leverages several external APIs to provide real-time, dynamic features. Here is a breakdown of how they are used, where to get credentials, and their usage limits.
-
-### 1. 📹 YouTube Data API v3
-*   **Use Case**: Powers the music discovery feature in the Admin Dashboard. It allows you to search for high-quality audio tracks to set as your profile's background music.
-*   **What it does**: Fetches video metadata, titles, and high-res thumbnails based on your search queries.
-*   **Where to get**: [Google Cloud Console](https://console.cloud.google.com/).
-*   **Limits**: 10,000 units per day (Free Tier). Each search uses approximately 100 units.
-*   **Environment Variable**: `YOUTUBE_API_KEY`
-
-### 2. 🎧 Spotify Web API
-*   **Use Case**: Real-time "Currently Playing" widget and 3D Music Cards.
-*   **What it does**: Synchronizes your live listening activity, fetches track progress, album art, and audio features.
-*   **Where to get**: [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
-*   **Limits**: Rate limits apply based on volume, but generally sufficient for personal use.
-*   **Environment Variables**: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`
-
-### 3. 📡 Lanyard API (WebSockets)
-*   **Use Case**: Live Discord Presence system (Status, Activities, Custom Status).
-*   **What it does**: Connects to the Lanyard WebSocket to push real-time updates from your Discord profile to your personal page without refreshing.
-*   **Where to get**: Join the [Lanyard Discord](https://discord.gg/lanyard).
-*   **Prerequisite**: You must be in the Lanyard server and have "Display current activity as a status message" enabled in Discord.
-*   **Limits**: None (Public community API).
-
-### 4. 🌦️ Open-Meteo API (Weather)
-*   **Use Case**: Dynamic weather widget in the profile header.
-*   **What it does**: Fetches real-time temperature and weather conditions based on the location configured in your Admin Panel.
-*   **Limits**: Free for non-commercial use (up to 10,000 requests per day). No API Key required.
-
-### 5. 🧊 Supabase (Backend-as-a-Service)
-*   **Use Case**: Database, Authentication, and Image Hosting.
-*   **What it does**: Stores your profile configuration, handles administrator login, and serves uploaded assets (avatars, backgrounds).
-*   **Where to get**: [Supabase.com](https://supabase.com/).
-*   **Limits**: Free tier includes 500MB database and 1GB storage.
-
----
-
-## �📝 License
-## 📄 License
-
-This project is dual-licensed under the **MIT License** and the **Apache License 2.0**. You may choose the license that best suits your needs.
-
-- [MIT License](LICENSE-MIT)
-- [Apache License 2.0](LICENSE-APACHE)
-
-Created with ❤️ by [avrxtcloud](https://github.com/avrxtcloud).
+<div align="center">
+  <br />
+  <p>Built with ❤️ by <b>avrxtcloud</b></p>
+</div>
