@@ -6,7 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import {
     Instagram, Github, Mail, Play, Pause, Camera, BookOpen,
     ExternalLink, ArrowRight, ChevronRight, Share2, Activity,
-    Cloud, Sun, Thermometer, MapPin
+    Cloud, Sun, Thermometer, MapPin, Quote
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MeConfig } from '@/lib/me-config';
@@ -121,6 +121,43 @@ export default function MeClient({ initialConfig }: MeClientProps) {
         const interval = setInterval(fetchWeather, 1800000); // 30 mins
         return () => clearInterval(interval);
     }, [config.profile.location, config.profile.weatherEnabled]);
+
+    const [dailyQuote, setDailyQuote] = useState<{ text: string, author: string } | null>(null);
+
+    // Daily Quote Fetching (Every 24h)
+    useEffect(() => {
+        if (!config.widgets?.quotesEnabled) return;
+
+        const fetchQuote = async () => {
+            try {
+                // Use a proxy to avoid CORS OR use a daily seed if no API
+                // For now, let's use a very reliable daily endpoint
+                const res = await fetch('https://api.quotable.io/random?tags=inspirational');
+                if (res.ok) {
+                    const data = await res.json();
+                    setDailyQuote({ text: data.content, author: data.author });
+                } else {
+                    // Fallback
+                    setDailyQuote({ text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs" });
+                }
+            } catch (error) {
+                setDailyQuote({ text: "Code is like humor. When you have to explain it, it’s bad.", author: "Cory House" });
+            }
+        };
+
+        fetchQuote();
+    }, [config.widgets?.quotesEnabled]);
+
+    // Check if Note is active (24h)
+    const isNoteActive = () => {
+        if (!config.widgets?.notesEnabled || !config.widgets?.note?.text || !config.widgets?.note?.createdAt) return false;
+
+        const noteDate = new Date(config.widgets.note.createdAt).getTime();
+        const now = new Date().getTime();
+        const diffHours = (now - noteDate) / (1000 * 60 * 60);
+
+        return diffHours < 24;
+    };
 
     const [spotifyData, setSpotifyData] = useState<any>(null);
     const [isSpotifyLive, setIsSpotifyLive] = useState(config.music.spotifyEnabled);
@@ -351,6 +388,20 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                 <div className="text-center mb-10 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                     <div className="mb-6 relative inline-block">
                         <div className="absolute inset-0 z-10" onTouchStart={(e) => e.preventDefault()}></div>
+
+                        {/* Note Bubble (Instagram Style) */}
+                        {isNoteActive() && (
+                            <div className="absolute -top-6 -right-12 z-20 animate-bounce-slow">
+                                <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-2xl shadow-2xl max-w-[140px]">
+                                    <p className="text-[10px] font-medium text-white leading-tight break-words">
+                                        {config.widgets?.note?.text}
+                                    </p>
+                                    {/* Bubble Tail */}
+                                    <div className="absolute -bottom-1 left-2 w-2 h-2 bg-white/10 border-r border-b border-white/20 rotate-45 backdrop-blur-xl"></div>
+                                </div>
+                            </div>
+                        )}
+
                         <img
                             src={config.profile.avatarUrl}
                             alt="avrxt"
@@ -391,6 +442,19 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                                 )}></span>
                             </span>
                             <span className="text-[10px] font-mono uppercase tracking-widest">{statusInfo.text}</span>
+                        </div>
+                    )}
+
+                    {/* Daily Quote Widget */}
+                    {config.widgets?.quotesEnabled && dailyQuote && (
+                        <div className="mt-8 px-6 py-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] backdrop-blur-xl relative overflow-hidden group animate-fade-in">
+                            <Quote size={24} className="absolute -top-2 -left-2 text-white/5 rotate-12" />
+                            <p className="text-[11px] font-medium leading-relaxed text-zinc-300 italic">
+                                "{dailyQuote.text}"
+                            </p>
+                            <p className="mt-2 text-[9px] font-mono uppercase tracking-widest text-zinc-500">
+                                — {dailyQuote.author}
+                            </p>
                         </div>
                     )}
 
@@ -745,6 +809,20 @@ export default function MeClient({ initialConfig }: MeClientProps) {
             <style jsx global>{`
                 .immersive-mode {
                     transition: all 1s ease;
+                }
+                @keyframes fade-in {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes bounce-slow {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-5px); }
+                }
+                .animate-fade-in {
+                    animation: fade-in 0.8s ease forwards;
+                }
+                .animate-bounce-slow {
+                    animation: bounce-slow 3s ease-in-out infinite;
                 }
             `}</style>
         </main >

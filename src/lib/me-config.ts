@@ -47,6 +47,14 @@ export interface MeConfig {
         previewUrl?: string; // for posts
         meta?: string; // e.g. "avrxt-resend-2025"
     }[];
+    widgets?: {
+        quotesEnabled: boolean;
+        notesEnabled: boolean;
+        note?: {
+            text: string;
+            createdAt: string;
+        };
+    };
 }
 
 export const defaultMeConfig: MeConfig = {
@@ -78,5 +86,10 @@ export const defaultMeConfig: MeConfig = {
         { id: 'r1', title: 'Visual Gallery', url: '/gallery', type: 'gallery' },
         { id: 'r2', title: 'Documentation Portal', url: '/docs', type: 'doc' },
         { id: 'r3', title: 'Rethinking Email Infrastructure', url: '/docs/avrxt-resend-2025', type: 'post', previewUrl: 'https://www.avrxt.in/assets/screenshot-zoom-analytics.webp', meta: 'avrxt-resend-2025' }
-    ]
+    ],
+    widgets: {
+        quotesEnabled: true,
+        notesEnabled: true,
+        note: { text: "Hello! Check out my work.", createdAt: new Date().toISOString() }
+    }
 };

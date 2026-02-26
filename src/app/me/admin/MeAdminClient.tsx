@@ -586,6 +586,111 @@ export default function MeAdminClient({ initialConfig, isSpotifyConnected }: MeA
 
                         {/* Right Column */}
                         <div className="space-y-6">
+                            {/* Widget Settings */}
+                            <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
+                                <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 font-mono">
+                                    <Activity size={16} className="text-zinc-500" /> Widget_Control
+                                </h2>
+
+                                {/* Quote Toggle */}
+                                <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-white uppercase tracking-widest">Daily_Quotes</span>
+                                        <span className="text-[8px] font-mono text-zinc-500 uppercase">Updates every 24h</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setConfig({
+                                            ...config,
+                                            widgets: { ...config?.widgets!, quotesEnabled: !config?.widgets?.quotesEnabled }
+                                        })}
+                                        className={cn(
+                                            "px-3 py-1 rounded-md text-[9px] font-bold font-mono transition-all uppercase",
+                                            config?.widgets?.quotesEnabled ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-zinc-800 text-zinc-500 border border-white/5"
+                                        )}
+                                    >
+                                        {config?.widgets?.quotesEnabled ? 'ENABLED' : 'DISABLED'}
+                                    </button>
+                                </div>
+
+                                {/* Note Widget */}
+                                <div className="space-y-3 p-3 rounded-xl bg-black/40 border border-white/5">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest">Profile_Note</span>
+                                            <span className="text-[8px] font-mono text-zinc-500 uppercase">Instagram Style Note</span>
+                                        </div>
+                                        <button
+                                            onClick={() => setConfig({
+                                                ...config,
+                                                widgets: { ...config?.widgets!, notesEnabled: !config?.widgets?.notesEnabled }
+                                            })}
+                                            className={cn(
+                                                "px-3 py-1 rounded-md text-[9px] font-bold font-mono transition-all uppercase",
+                                                config?.widgets?.notesEnabled ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-zinc-800 text-zinc-500 border border-white/5"
+                                            )}
+                                        >
+                                            {config?.widgets?.notesEnabled ? 'ENABLED' : 'DISABLED'}
+                                        </button>
+                                    </div>
+
+                                    {config?.widgets?.notesEnabled && (
+                                        <div className="space-y-2">
+                                            <input
+                                                type="text"
+                                                maxLength={60}
+                                                value={config?.widgets?.note?.text || ''}
+                                                onChange={(e) => setConfig({
+                                                    ...config,
+                                                    widgets: {
+                                                        ...config?.widgets!,
+                                                        note: {
+                                                            text: e.target.value,
+                                                            createdAt: config?.widgets?.note?.createdAt || new Date().toISOString()
+                                                        }
+                                                    }
+                                                })}
+                                                className="admin-input text-[10px]"
+                                                placeholder="What's on your mind? (max 60 chars)"
+                                            />
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[8px] font-mono text-zinc-600">
+                                                    {config?.widgets?.note?.createdAt ? `POSTED: ${new Date(config.widgets.note.createdAt).toLocaleString()}` : 'NEW_NOTE'}
+                                                </span>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => setConfig({
+                                                            ...config,
+                                                            widgets: {
+                                                                ...config?.widgets!,
+                                                                note: {
+                                                                    text: config?.widgets?.note?.text || '',
+                                                                    createdAt: new Date().toISOString()
+                                                                }
+                                                            }
+                                                        })}
+                                                        className="text-[8px] font-mono text-emerald-500 hover:text-emerald-400 uppercase"
+                                                    >
+                                                        [UPDATE_TIME]
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setConfig({
+                                                            ...config,
+                                                            widgets: {
+                                                                ...config?.widgets!,
+                                                                note: { text: '', createdAt: '' }
+                                                            }
+                                                        })}
+                                                        className="text-[8px] font-mono text-red-500 hover:text-red-400 uppercase"
+                                                    >
+                                                        [REMOVE]
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Links Settings */}
                             <div className="p-6 rounded-2xl bg-zinc-900/40 border border-white/5 space-y-4">
                                 <div className="flex justify-between items-center">
