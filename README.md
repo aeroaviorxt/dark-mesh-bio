@@ -10,7 +10,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-[**Explore Live Demo**](https://avrxt.in/me)  •  [**Documentation**](#-setup-guide)  •  [**Community**](COLLABORATION.md)
+[**Explore Live Demo**](https://avrxt.in/me)  •  [**Full Setup Guide**](SETUP.md)  •  [**Community**](COLLABORATION.md)
 
 </div>
 
