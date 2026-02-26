@@ -130,7 +130,7 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                     }, message.d.heartbeat_interval);
 
                     // Subscribe to individual user
-                    socket.send(JSON.stringify({
+                    socket?.send(JSON.stringify({
                         op: 2,
                         d: { subscribe_to_id: discordId }
                     }));
