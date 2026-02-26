@@ -13,8 +13,9 @@ import { MeConfig } from '@/lib/me-config';
 import { saveMeConfigAction } from '@/app/actions/me';
 import { logout } from '@/app/actions/auth';
 import { createClient } from '@/utils/supabase/client';
-import { disconnectSpotifyAction, searchSpotifyAction } from '@/app/actions/spotify';
-import { Search } from 'lucide-react';
+import { disconnectSpotifyAction } from '@/app/actions/spotify';
+import { searchYouTubeAction } from '@/app/actions/youtube';
+import { Search, Youtube } from 'lucide-react';
 
 interface MeAdminClientProps {
     initialConfig: MeConfig;
@@ -23,9 +24,10 @@ interface MeAdminClientProps {
 
 export default function MeAdminClient({ initialConfig, isSpotifyConnected }: MeAdminClientProps) {
     const [config, setConfig] = useState<MeConfig>(initialConfig);
-    const [spotifySearchQuery, setSpotifySearchQuery] = useState('');
-    const [spotifyResults, setSpotifyResults] = useState<any[]>([]);
-    const [isSearchingSpotify, setIsSearchingSpotify] = useState(false);
+    const [ytSearchQuery, setYtSearchQuery] = useState('');
+    const [ytResults, setYtResults] = useState<any[]>([]);
+    const [isSearchingYt, setIsSearchingYt] = useState(false);
+    const [ytError, setYtError] = useState('');
     const [saveStatus, setSaveStatus] = useState<string>('');
     const [isPending, setIsPending] = useState(false);
 
@@ -537,92 +539,116 @@ export default function MeAdminClient({ initialConfig, isSpotifyConnected }: MeA
                                     </div>
                                 </div>
 
-                                {/* Spotify Search Section */}
+                                {/* YouTube Search Section */}
                                 <div className="space-y-3 pt-4">
-                                    <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest font-mono">Search_Frequency</h3>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Youtube size={13} className="text-red-500" />
+                                        <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest font-mono">Search_YouTube</h3>
+                                    </div>
+
+                                    {/* Search input */}
                                     <div className="relative group">
                                         <input
                                             type="text"
-                                            value={spotifySearchQuery}
-                                            onChange={(e) => setSpotifySearchQuery(e.target.value)}
+                                            value={ytSearchQuery}
+                                            onChange={(e) => { setYtSearchQuery(e.target.value); setYtError(''); }}
                                             onKeyDown={async (e) => {
-                                                if (e.key === 'Enter') {
-                                                    setIsSearchingSpotify(true);
-                                                    const results = await searchSpotifyAction(spotifySearchQuery);
-                                                    if (Array.isArray(results)) setSpotifyResults(results);
-                                                    setIsSearchingSpotify(false);
+                                                if (e.key === 'Enter' && ytSearchQuery.trim()) {
+                                                    setIsSearchingYt(true); setYtError('');
+                                                    const res = await searchYouTubeAction(ytSearchQuery.trim());
+                                                    if (Array.isArray(res)) setYtResults(res);
+                                                    else setYtError((res as any)?.error || 'Search failed');
+                                                    setIsSearchingYt(false);
                                                 }
                                             }}
                                             className="admin-input pr-10"
-                                            placeholder="Search Spotify Tracks..."
+                                            placeholder="Search YouTube for a song..."
                                         />
                                         <button
                                             onClick={async () => {
-                                                setIsSearchingSpotify(true);
-                                                const results = await searchSpotifyAction(spotifySearchQuery);
-                                                if (Array.isArray(results)) setSpotifyResults(results);
-                                                setIsSearchingSpotify(false);
+                                                if (!ytSearchQuery.trim()) return;
+                                                setIsSearchingYt(true); setYtError('');
+                                                const res = await searchYouTubeAction(ytSearchQuery.trim());
+                                                if (Array.isArray(res)) setYtResults(res);
+                                                else setYtError((res as any)?.error || 'Search failed');
+                                                setIsSearchingYt(false);
                                             }}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 group-hover:text-emerald-500 transition-colors"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 group-hover:text-red-400 transition-colors"
                                         >
-                                            {isSearchingSpotify ? <div className="w-3 h-3 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div> : <Search size={14} />}
+                                            {isSearchingYt
+                                                ? <div className="w-3 h-3 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                                : <Search size={14} />}
                                         </button>
                                     </div>
 
-                                    {/* Results List */}
-                                    {spotifyResults.length > 0 && (
-                                        <div className="max-h-48 overflow-y-auto space-y-2 p-2 rounded-xl bg-black/40 border border-white/5 custom-scrollbar">
-                                            {spotifyResults.map((track) => (
+                                    {/* Error */}
+                                    {ytError && (
+                                        <div className="text-[9px] font-mono text-red-400 px-1">{ytError}</div>
+                                    )}
+
+                                    {/* Results */}
+                                    {ytResults.length > 0 && (
+                                        <div className="max-h-56 overflow-y-auto space-y-2 p-2 rounded-xl bg-black/40 border border-white/5 custom-scrollbar">
+                                            {ytResults.map((item) => (
                                                 <button
-                                                    key={track.id}
+                                                    key={item.videoId}
                                                     onClick={() => {
                                                         setConfig({
                                                             ...config,
                                                             music: {
                                                                 ...config.music,
-                                                                title: track.name,
-                                                                artist: track.artist,
-                                                                coverUrl: track.coverUrl,
-                                                                audioUrl: track.previewUrl || config.music.audioUrl,
-                                                                spotifyEnabled: false // Switch to fixed song mode
+                                                                title: item.title,
+                                                                artist: item.channelTitle,
+                                                                coverUrl: item.thumbnail,
+                                                                youtubeVideoId: item.videoId,
                                                             }
                                                         });
-                                                        setSpotifyResults([]);
-                                                        setSpotifySearchQuery('');
+                                                        setYtResults([]);
+                                                        setYtSearchQuery('');
                                                     }}
                                                     className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all text-left group"
                                                 >
-                                                    <img src={track.coverUrl} className="w-8 h-8 rounded shrink-0 object-cover" alt="" />
+                                                    <div className="relative shrink-0 w-16 h-9 rounded overflow-hidden border border-white/5">
+                                                        <img src={item.thumbnail} className="w-full h-full object-cover" alt="" />
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <div className="w-4 h-4 bg-red-500 rounded-sm flex items-center justify-center">
+                                                                <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[7px] border-l-white border-b-[4px] border-b-transparent ml-0.5" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="text-[10px] font-bold text-white uppercase truncate">{track.name}</div>
-                                                        <div className="text-[8px] font-mono text-zinc-500 uppercase truncate">{track.artist}</div>
+                                                        <div className="text-[9px] font-bold text-white truncate leading-tight">{item.title}</div>
+                                                        <div className="text-[8px] font-mono text-zinc-500 uppercase truncate mt-0.5">{item.channelTitle}</div>
                                                     </div>
                                                 </button>
                                             ))}
                                         </div>
                                     )}
 
-                                    {/* Selection Preview */}
-                                    <div className="p-3 rounded-xl bg-black/40 border border-white/5 flex items-center gap-4">
-                                        <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 shrink-0">
-                                            <img src={config.music.coverUrl} alt="Selection" className="w-full h-full object-cover" />
+                                    {/* Selected Song Preview */}
+                                    <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+                                        <div className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest mb-2">Current_Freq_Preview</div>
+                                        <div className="flex items-center gap-3">
+                                            {config.music.youtubeVideoId ? (
+                                                <div className="relative w-16 h-9 rounded overflow-hidden border border-red-500/20 shrink-0">
+                                                    <img src={`https://img.youtube.com/vi/${config.music.youtubeVideoId}/mqdefault.jpg`} className="w-full h-full object-cover" alt="" />
+                                                    <div className="absolute bottom-0.5 right-0.5">
+                                                        <Youtube size={10} className="text-red-500" />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="w-16 h-9 rounded bg-zinc-900 border border-white/5 shrink-0 flex items-center justify-center">
+                                                    <Youtube size={12} className="text-zinc-700" />
+                                                </div>
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[10px] font-bold text-white truncate">{config.music.title}</div>
+                                                <div className="text-[8px] font-mono text-zinc-500 truncate">{config.music.artist}</div>
+                                                {config.music.youtubeVideoId && (
+                                                    <div className="text-[7px] font-mono text-red-500/60 mt-0.5">yt:{config.music.youtubeVideoId}</div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest mb-1">SELECTED_FREQ</div>
-                                            <div className="text-[10px] font-bold text-white uppercase truncate">{config.music.title}</div>
-                                            <div className="text-[8px] font-mono text-zinc-500 uppercase truncate">{config.music.artist}</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Manual Tweak */}
-                                    <div className="pt-2">
-                                        <input
-                                            type="text"
-                                            value={config.music.audioUrl}
-                                            onChange={(e) => setConfig({ ...config, music: { ...config.music, audioUrl: e.target.value } })}
-                                            className="admin-input text-[8px]"
-                                            placeholder="Direct Audio URL (Optional)"
-                                        />
                                     </div>
                                 </div>
                             </div>

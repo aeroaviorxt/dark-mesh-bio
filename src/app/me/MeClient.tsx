@@ -585,16 +585,17 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                                 )}
                             </div>
 
-                            {config.music.spotifyEnabled && spotifyData?.isPlaying ? (
+                            {/* Spotify live progress bar */}
+                            {config.music.spotifyEnabled && spotifyData?.isPlaying && (
                                 <div className="mt-3 space-y-1.5">
                                     <div className="flex justify-between items-center px-0.5">
                                         <span className="text-[7px] font-mono text-zinc-500 uppercase tracking-tighter">
                                             {Math.floor(spotifyData.progressMs / 60000)}:{Math.floor((spotifyData.progressMs % 60000) / 1000).toString().padStart(2, '0')}
                                         </span>
                                         <div className="flex gap-0.5">
-                                            <div className="w-0.5 h-2 bg-emerald-500/40 rounded-full" />
-                                            <div className="w-0.5 h-3 bg-emerald-500/60 rounded-full" />
-                                            <div className="w-0.5 h-2 bg-emerald-500/40 rounded-full" />
+                                            <div className="w-0.5 h-2 bg-emerald-500/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                            <div className="w-0.5 h-3 bg-emerald-500/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                            <div className="w-0.5 h-2 bg-emerald-500/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                                         </div>
                                         <span className="text-[7px] font-mono text-zinc-500 uppercase tracking-tighter">
                                             {Math.floor(spotifyData.durationMs / 60000)}:{Math.floor((spotifyData.durationMs % 60000) / 1000).toString().padStart(2, '0')}
@@ -602,33 +603,57 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                                     </div>
                                     <div className="w-full h-[2px] bg-white/5 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full animate-progress-flow transition-all duration-1000 shadow-[0_0_8px_#10b981]"
+                                            className="h-full animate-progress-flow transition-all duration-1000 shadow-[0_0_8px_#10b981] bg-gradient-to-r from-emerald-400 to-emerald-600"
                                             style={{ width: `${(spotifyData.progressMs / spotifyData.durationMs) * 100}%` }}
                                         />
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="mt-4 relative group/progress">
-                                    <div className="w-full h-[2px] bg-white/5 rounded-full overflow-hidden relative">
-                                        <div
-                                            className={cn(
-                                                "h-full transition-all duration-300 shadow-[0_0_8px_#ffffff20]",
-                                                isPlaying ? "animate-progress-flow bg-white shadow-[0_0_8px_#ffffff]" : "bg-zinc-600"
-                                            )}
-                                            style={{ width: `${progress}%` }}
-                                        />
-                                    </div>
-                                    <input
-                                        type="range"
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                        value={progress}
-                                        onChange={handleProgressChange}
-                                        min="0"
-                                        max="100"
-                                    />
-                                    <audio ref={audioRef} src={config.music.audioUrl} />
-                                </div>
                             )}
+
+                            {/* Play section: YouTube embed if videoId set, else audio fallback */}
+                            {(!config.music.spotifyEnabled || !spotifyData?.isPlaying) && (
+                                config.music.youtubeVideoId ? (
+                                    /* ── YouTube Full Player ── */
+                                    <div className="mt-3">
+                                        <div className="relative w-full rounded-xl overflow-hidden border border-white/5 bg-black" style={{ aspectRatio: '16/9' }}>
+                                            <iframe
+                                                src={`https://www.youtube-nocookie.com/embed/${config.music.youtubeVideoId}?rel=0&modestbranding=1&color=white`}
+                                                title={config.music.title}
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                                className="absolute inset-0 w-full h-full"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-1.5 mt-2">
+                                            <div className="w-1 h-1 rounded-full bg-red-500" />
+                                            <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">Full_Song · YouTube</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* ── Audio fallback (legacy) ── */
+                                    <div className="mt-4 relative group/progress">
+                                        <div className="w-full h-[2px] bg-white/5 rounded-full overflow-hidden relative">
+                                            <div
+                                                className={cn(
+                                                    "h-full transition-all duration-300 shadow-[0_0_8px_#ffffff20]",
+                                                    isPlaying ? "animate-progress-flow bg-white shadow-[0_0_8px_#ffffff]" : "bg-zinc-600"
+                                                )}
+                                                style={{ width: `${progress}%` }}
+                                            />
+                                        </div>
+                                        <input
+                                            type="range"
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                            value={progress}
+                                            onChange={handleProgressChange}
+                                            min="0"
+                                            max="100"
+                                        />
+                                        <audio ref={audioRef} src={config.music.audioUrl} />
+                                    </div>
+                                )
+                            )}
+
                         </div>
                     </div>
                 </div>

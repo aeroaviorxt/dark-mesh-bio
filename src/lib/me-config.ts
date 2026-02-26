@@ -30,6 +30,7 @@ export interface MeConfig {
         artist: string;
         coverUrl: string;
         audioUrl: string;
+        youtubeVideoId?: string;
         spotifyEnabled?: boolean;
     };
     links: MeLink[];
@@ -73,6 +74,7 @@ export const defaultMeConfig: MeConfig = {
         artist: "JVKE",
         coverUrl: "https://objects.avrxt.in/assets/ab67616d0000b273a0934c15232680a3afc9da6e.jpeg",
         audioUrl: "https://objects.avrxt.in/assets/SpotiDownloader.com%20-%20her%20-%20JVKE.mp3",
+        youtubeVideoId: "",
         spotifyEnabled: false
     },
     links: [
