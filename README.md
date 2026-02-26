@@ -8,8 +8,8 @@ A state-of-the-art, high-performance Link-in-Bio system built with **Next.js 15+
 
 1.  **Fork & Clone**:
     ```bash
-    git clone https://github.com/aviorxtaero/avrxt-me.git
-    cd avrxt-me
+    git clone https://github.com/aeroaviorxt/dark-mesh-bio.git
+    cd dark-mesh-bio
     npm install
     ```
 2.  **Environment Setup**:
