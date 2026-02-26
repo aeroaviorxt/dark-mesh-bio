@@ -239,6 +239,13 @@ export default function MeAdminClient({ initialConfig, isSpotifyConnected }: MeA
                                         className="admin-input"
                                         placeholder="Gallery Banner URL"
                                     />
+                                    <input
+                                        type="text"
+                                        value={config.profile.location || ''}
+                                        onChange={(e) => setConfig({ ...config, profile: { ...config.profile, location: e.target.value } })}
+                                        className="admin-input"
+                                        placeholder="Location (e.g. Chennai, IN)"
+                                    />
                                     <div className="flex items-center gap-2">
                                         <label className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg cursor-pointer transition-all border border-white/5">
                                             <Upload size={12} className="text-zinc-400" />

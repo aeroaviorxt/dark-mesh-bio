@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import {
     Instagram, Github, Mail, Play, Pause, Camera, BookOpen,
-    ExternalLink, ArrowRight, ChevronRight, Share2, Activity
+    ExternalLink, ArrowRight, ChevronRight, Share2, Activity,
+    Cloud, Sun, Thermometer, MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MeConfig } from '@/lib/me-config';
@@ -75,6 +76,44 @@ export default function MeClient({ initialConfig }: MeClientProps) {
         audio.currentTime = (value / 100) * audio.duration;
         setProgress(value);
     };
+
+    const [weather, setWeather] = useState<any>(null);
+
+    // Weather Fetching (Open-Meteo)
+    useEffect(() => {
+        if (!config.profile.location) return;
+
+        const fetchWeather = async () => {
+            try {
+                // 1. Geocoding
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(config.profile.location ?? '')}&count=1&language=en&format=json`);
+                const geoData = await geoRes.json();
+
+                if (!geoData.results?.[0]) return;
+                const { latitude, longitude, name } = geoData.results[0];
+
+                // 2. Weather
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=relativehumidity_2m,apparent_temperature`);
+                const weatherData = await weatherRes.json();
+
+                if (weatherData.current_weather) {
+                    setWeather({
+                        temp: Math.round(weatherData.current_weather.temperature),
+                        condition: weatherData.current_weather.weathercode,
+                        location: name,
+                        humidity: weatherData.hourly.relativehumidity_2m[0],
+                        feelsLike: Math.round(weatherData.hourly.apparent_temperature[0])
+                    });
+                }
+            } catch (error) {
+                console.error('Weather fetch error:', error);
+            }
+        };
+
+        fetchWeather();
+        const interval = setInterval(fetchWeather, 1800000); // 30 mins
+        return () => clearInterval(interval);
+    }, [config.profile.location]);
 
     const [spotifyData, setSpotifyData] = useState<any>(null);
     const [isSpotifyLive, setIsSpotifyLive] = useState(config.music.spotifyEnabled);
@@ -345,6 +384,31 @@ export default function MeClient({ initialConfig }: MeClientProps) {
                                 )}></span>
                             </span>
                             <span className="text-[10px] font-mono uppercase tracking-widest">{statusInfo.text}</span>
+                        </div>
+                    )}
+
+                    {/* Weather & Location Widget */}
+                    {weather && (
+                        <div className="mt-4 flex flex-col items-center gap-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                            <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl shadow-2xl transition-all hover:bg-white/[0.06] group cursor-default">
+                                <div className="flex items-center gap-1.5">
+                                    <MapPin size={10} className="text-zinc-500" />
+                                    <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-400">{weather.location}</span>
+                                </div>
+                                <div className="w-[1px] h-3 bg-white/10"></div>
+                                <div className="flex items-center gap-2">
+                                    {weather.condition <= 3 ? (
+                                        <Sun size={12} className="text-yellow-500 animate-pulse" />
+                                    ) : (
+                                        <Cloud size={12} className="text-blue-400" />
+                                    )}
+                                    <span className="text-[10px] font-bold font-mono text-white">{weather.temp}°C</span>
+                                </div>
+                                <div className="hidden group-hover:flex items-center gap-2 transition-all animate-in fade-in slide-in-from-left-2">
+                                    <div className="w-[1px] h-3 bg-white/10"></div>
+                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-tighter">Feels {weather.feelsLike}°C</span>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

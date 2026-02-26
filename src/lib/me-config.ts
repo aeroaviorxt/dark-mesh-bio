@@ -22,6 +22,7 @@ export interface MeConfig {
             mode: 'manual' | 'auto';
             discordId?: string;
         };
+        location?: string;
     };
     music: {
         title: string;
